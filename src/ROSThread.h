@@ -55,9 +55,10 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-#include "color.h"
+#include "file_player/color.h"
 #include "rosbag/bag.h"
 #include <ros/transport_hints.h>
+#include "file_player/datathread.h"
 
 using namespace std;
 
@@ -75,13 +76,22 @@ public:
 
     bool play_flag_;
     bool pause_flag_;
+    double play_rate_;
     string data_folder_path_;
     void Ready();
 
 signals:
+    void StampShow(quint64 stamp);
 
 
 private:
+
+    ros::Publisher altimeter_pub_;
+    ros::Publisher encoder_pub_;
+    ros::Publisher fog_pub_;
+    ros::Publisher gps_pub_;
+    ros::Publisher vrs_pub_;
+    ros::Publisher imu_pub_;
 
     map<int64_t, string>                    data_stamp_;
     map<int64_t, irp_sen_msgs::altimeter>   altimeter_data_;
@@ -91,6 +101,34 @@ private:
     map<int64_t, irp_sen_msgs::vrs>         vrs_data_;
     map<int64_t, irp_sen_msgs::imu>         imu_data_;
 
+    DataThread<int64_t> data_stamp_thread_;
+    DataThread<int64_t> altimter_thread_;
+    DataThread<int64_t> encoder_thread_;
+    DataThread<int64_t> fog_thread_;
+    DataThread<int64_t> gps_thread_;
+    DataThread<int64_t> vrs_thread_;
+    DataThread<int64_t> imu_thread_;
+    DataThread<int64_t> omni_thread_;
+    DataThread<int64_t> stereo_thread_;
+    DataThread<int64_t> velodyne_left_thread_;
+    DataThread<int64_t> velodyne_right_thread_;
+    DataThread<int64_t> sick_back_thread_;
+    DataThread<int64_t> sick_middle_thread_;
+
+    void DataStampThread();
+    void AltimeterThread();
+    void EncoderThread();
+    void FogThread();
+    void GpsThread();
+    void VrsThread();
+    void ImuThread();
+
+    int64_t initial_data_stamp_;
+
+
+    ros::Timer timer_;
+    void TimerCallback(const ros::TimerEvent&);
+    int64_t processed_stamp_;
 
 public slots:
 

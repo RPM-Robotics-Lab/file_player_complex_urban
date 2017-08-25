@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget *parent) :
   my_ros_ = new ROSThread(this, &mutex);
   ui_->setupUi(this);
   my_ros_->start();
+  connect(my_ros_, SIGNAL(StampShow(quint64)), this, SLOT(SetStamp(quint64)));
 
   connect(ui_->quitButton, SIGNAL(pressed()), this, SLOT(TryClose()));
   connect(ui_->pushButton, SIGNAL(pressed()), this, SLOT(FilePathSet()));
@@ -67,6 +68,11 @@ void MainWindow::FilePathSet()
 
 }
 
+void MainWindow::SetStamp(quint64 stamp)
+{
+  this->ui_->label_2->setText(QString::number(stamp));
+}
+
 void MainWindow::Play()
 {
   if(play_flag_ == false){
@@ -96,8 +102,7 @@ void MainWindow::Pause()
 
 void MainWindow::PlaySpeedChange(double value)
 {
-
-
+  my_ros_->play_rate_ = value;
 }
 
 void MainWindow::LoopFlagChange(int value)

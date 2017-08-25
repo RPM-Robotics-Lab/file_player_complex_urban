@@ -55,6 +55,7 @@ private slots:
   void Pause();
   void PlaySpeedChange(double value);
   void LoopFlagChange(int value);
+  void SetStamp(quint64 stamp);
 
 signals:
   void setThreadFinished(bool);

@@ -8,16 +8,56 @@ ROSThread::ROSThread(QObject *parent, QMutex *th_mutex) :
     QThread(parent), mutex_(th_mutex)
 {
 
+  processed_stamp_ = 0;
+  play_rate_ = 1.0;
+
 }
+
 ROSThread::~ROSThread()
 {
 
+  data_stamp_thread_.active_ = false;
+  data_stamp_thread_.cv_.notify_all();
+  data_stamp_thread_.thread_.join();
+
+  altimter_thread_.active_ = false;
+  altimter_thread_.cv_.notify_all();
+  altimter_thread_.thread_.join();
+
+  encoder_thread_.active_ = false;
+  encoder_thread_.cv_.notify_all();
+  encoder_thread_.thread_.join();
+
+  fog_thread_.active_ = false;
+  fog_thread_.cv_.notify_all();
+  fog_thread_.thread_.join();
+
+  gps_thread_.active_ = false;
+  gps_thread_.cv_.notify_all();
+  gps_thread_.thread_.join();
+
+  vrs_thread_.active_ = false;
+  vrs_thread_.cv_.notify_all();
+  vrs_thread_.thread_.join();
+
+  imu_thread_.active_ = false;
+  imu_thread_.cv_.notify_all();
+  imu_thread_.thread_.join();
 
 }
 
 void ROSThread::ros_initialize(ros::NodeHandle &n)
 {
   nh_ = n;
+
+  timer_ = nh_.createTimer(ros::Duration(0.001), boost::bind(&ROSThread::TimerCallback, this, _1));
+
+  altimeter_pub_ = nh_.advertise<irp_sen_msgs::altimeter>("/altimeter_data", 1000);
+  encoder_pub_ = nh_.advertise<irp_sen_msgs::encoder>("/encoder_count", 1000);
+  fog_pub_ = nh_.advertise<irp_sen_msgs::fog_3axis>("/dsp1760_data", 1000);
+  gps_pub_ = nh_.advertise<sensor_msgs::NavSatFix>("/gps/fix", 1000);
+  vrs_pub_ = nh_.advertise<irp_sen_msgs::vrs>("/vrs_gps_data", 1000);
+  imu_pub_ = nh_.advertise<irp_sen_msgs::imu>("/xsens_imu_data", 1000);
 
 }
 
@@ -38,7 +78,6 @@ void ROSThread::Ready()
      return;
   }
 
-
   //Read CSV file and make map
   FILE *fp;
   int64_t stamp;
@@ -51,6 +90,8 @@ void ROSThread::Ready()
   }
   cout << "Stamp data are loaded" << endl;
   fclose(fp);
+
+  initial_data_stamp_ = data_stamp_.begin()->first;
 
   //Read altimeter data
   fp = fopen((data_folder_path_+"/sensor_data/altimeter.csv").c_str(),"r");
@@ -166,4 +207,158 @@ void ROSThread::Ready()
   cout << "IMU data are loaded" << endl;
   fclose(fp);
 
+  data_stamp_thread_.thread_ = std::thread(&ROSThread::DataStampThread,this);
+  altimter_thread_.thread_ = std::thread(&ROSThread::AltimeterThread,this);
+  encoder_thread_.thread_ = std::thread(&ROSThread::EncoderThread,this);
+  fog_thread_.thread_ = std::thread(&ROSThread::FogThread,this);
+  gps_thread_.thread_ = std::thread(&ROSThread::GpsThread,this);
+  vrs_thread_.thread_ = std::thread(&ROSThread::VrsThread,this);
+  imu_thread_.thread_ = std::thread(&ROSThread::ImuThread,this);
+
+}
+
+void ROSThread::DataStampThread()
+{
+  for(auto iter = data_stamp_.begin() ; iter != data_stamp_.end() ; iter ++){
+    auto stamp = iter->first;
+
+    while((stamp > (initial_data_stamp_+processed_stamp_))&&(data_stamp_thread_.active_ == true)){
+      usleep(1);
+    }
+    if(data_stamp_thread_.active_ == false) return;
+    if(iter->second.compare("altimeter") == 0){
+      altimter_thread_.push(stamp);
+      altimter_thread_.cv_.notify_all();
+    }else if(iter->second.compare("encoder") == 0){
+      encoder_thread_.push(stamp);
+      encoder_thread_.cv_.notify_all();
+    }else if(iter->second.compare("fog") == 0){
+      fog_thread_.push(stamp);
+      fog_thread_.cv_.notify_all();
+    }else if(iter->second.compare("gps") == 0){
+      gps_thread_.push(stamp);
+      gps_thread_.cv_.notify_all();
+    }else if(iter->second.compare("vrs") == 0){
+      vrs_thread_.push(stamp);
+      vrs_thread_.cv_.notify_all();
+    }else if(iter->second.compare("imu") == 0){
+      imu_thread_.push(stamp);
+      imu_thread_.cv_.notify_all();
+    }
+
+    emit StampShow(initial_data_stamp_+processed_stamp_);
+  }
+}
+
+void ROSThread::AltimeterThread()
+{
+  while(1){
+    std::unique_lock<std::mutex> ul(altimter_thread_.mutex_);
+    altimter_thread_.cv_.wait(ul);
+    if(altimter_thread_.active_ == false) return;
+    ul.unlock();
+
+    while(!altimter_thread_.data_queue_.empty()){
+      auto data = altimter_thread_.pop();
+      //process
+      altimeter_pub_.publish(altimeter_data_[data]);
+
+    }
+  }
+}
+
+void ROSThread::EncoderThread()
+{
+  while(1){
+    std::unique_lock<std::mutex> ul(encoder_thread_.mutex_);
+    encoder_thread_.cv_.wait(ul);
+    if(encoder_thread_.active_ == false) return;
+    ul.unlock();
+
+    while(!encoder_thread_.data_queue_.empty()){
+      auto data = encoder_thread_.pop();
+      //process
+      encoder_pub_.publish(encoder_data_[data]);
+
+    }
+  }
+}
+
+void ROSThread::FogThread()
+{
+  while(1){
+    std::unique_lock<std::mutex> ul(fog_thread_.mutex_);
+    fog_thread_.cv_.wait(ul);
+    if(fog_thread_.active_ == false) return;
+    ul.unlock();
+
+    while(!fog_thread_.data_queue_.empty()){
+      auto data = fog_thread_.pop();
+      //process
+      fog_pub_.publish(fog_data_[data]);
+
+    }
+  }
+}
+
+void ROSThread::GpsThread()
+{
+  while(1){
+    std::unique_lock<std::mutex> ul(gps_thread_.mutex_);
+    gps_thread_.cv_.wait(ul);
+    if(gps_thread_.active_ == false) return;
+    ul.unlock();
+
+    while(!gps_thread_.data_queue_.empty()){
+      auto data = gps_thread_.pop();
+      //process
+      gps_pub_.publish(gps_data_[data]);
+
+    }
+  }
+}
+
+void ROSThread::VrsThread()
+{
+  while(1){
+    std::unique_lock<std::mutex> ul(vrs_thread_.mutex_);
+    vrs_thread_.cv_.wait(ul);
+    if(vrs_thread_.active_ == false) return;
+    ul.unlock();
+
+    while(!vrs_thread_.data_queue_.empty()){
+      auto data = vrs_thread_.pop();
+      //process
+      vrs_pub_.publish(vrs_data_[data]);
+
+    }
+  }
+}
+
+void ROSThread::ImuThread()
+{
+  while(1){
+    std::unique_lock<std::mutex> ul(imu_thread_.mutex_);
+    imu_thread_.cv_.wait(ul);
+    if(imu_thread_.active_ == false) return;
+    ul.unlock();
+
+    while(!imu_thread_.data_queue_.empty()){
+      auto data = imu_thread_.pop();
+      //process
+      imu_pub_.publish(imu_data_[data]);
+
+    }
+  }
+}
+
+void ROSThread::TimerCallback(const ros::TimerEvent&)
+{
+  if(play_flag_ == true && pause_flag_ == false){
+    processed_stamp_ += static_cast<int64_t>(static_cast<double>(1000000) * play_rate_);
+  }
+
+  if(play_flag_ == false){
+    processed_stamp_ = 0; //reset
+  }
 }
