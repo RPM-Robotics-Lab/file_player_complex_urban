@@ -129,6 +129,7 @@ private:
     ros::Timer timer_;
     void TimerCallback(const ros::TimerEvent&);
     int64_t processed_stamp_;
+    int64_t pre_timer_stamp_;
 
 public slots:
 

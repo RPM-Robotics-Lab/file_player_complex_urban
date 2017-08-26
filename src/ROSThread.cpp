@@ -18,31 +18,31 @@ ROSThread::~ROSThread()
 
   data_stamp_thread_.active_ = false;
   data_stamp_thread_.cv_.notify_all();
-  data_stamp_thread_.thread_.join();
+  if(data_stamp_thread_.thread_.joinable())  data_stamp_thread_.thread_.join();
 
   altimter_thread_.active_ = false;
   altimter_thread_.cv_.notify_all();
-  altimter_thread_.thread_.join();
+  if(altimter_thread_.thread_.joinable()) altimter_thread_.thread_.join();
 
   encoder_thread_.active_ = false;
   encoder_thread_.cv_.notify_all();
-  encoder_thread_.thread_.join();
+  if(encoder_thread_.thread_.joinable()) encoder_thread_.thread_.join();
 
   fog_thread_.active_ = false;
   fog_thread_.cv_.notify_all();
-  fog_thread_.thread_.join();
+  if(fog_thread_.thread_.joinable()) fog_thread_.thread_.join();
 
   gps_thread_.active_ = false;
   gps_thread_.cv_.notify_all();
-  gps_thread_.thread_.join();
+  if(gps_thread_.thread_.joinable()) gps_thread_.thread_.join();
 
   vrs_thread_.active_ = false;
   vrs_thread_.cv_.notify_all();
-  vrs_thread_.thread_.join();
+  if(vrs_thread_.thread_.joinable()) vrs_thread_.thread_.join();
 
   imu_thread_.active_ = false;
   imu_thread_.cv_.notify_all();
-  imu_thread_.thread_.join();
+  if(imu_thread_.thread_.joinable()) imu_thread_.thread_.join();
 
 }
 
@@ -50,7 +50,8 @@ void ROSThread::ros_initialize(ros::NodeHandle &n)
 {
   nh_ = n;
 
-  timer_ = nh_.createTimer(ros::Duration(0.001), boost::bind(&ROSThread::TimerCallback, this, _1));
+  pre_timer_stamp_ = ros::Time::now().toNSec();
+  timer_ = nh_.createTimer(ros::Duration(0.0001), boost::bind(&ROSThread::TimerCallback, this, _1));
 
   altimeter_pub_ = nh_.advertise<irp_sen_msgs::altimeter>("/altimeter_data", 1000);
   encoder_pub_ = nh_.advertise<irp_sen_msgs::encoder>("/encoder_count", 1000);
@@ -91,7 +92,7 @@ void ROSThread::Ready()
   cout << "Stamp data are loaded" << endl;
   fclose(fp);
 
-  initial_data_stamp_ = data_stamp_.begin()->first;
+  initial_data_stamp_ = data_stamp_.begin()->first - 1;
 
   //Read altimeter data
   fp = fopen((data_folder_path_+"/sensor_data/altimeter.csv").c_str(),"r");
@@ -223,6 +224,10 @@ void ROSThread::DataStampThread()
     auto stamp = iter->first;
 
     while((stamp > (initial_data_stamp_+processed_stamp_))&&(data_stamp_thread_.active_ == true)){
+      if(processed_stamp_ == 0){
+          iter = data_stamp_.begin();
+          stamp = iter->first;
+      }
       usleep(1);
     }
     if(data_stamp_thread_.active_ == false) return;
@@ -246,7 +251,7 @@ void ROSThread::DataStampThread()
       imu_thread_.cv_.notify_all();
     }
 
-    emit StampShow(initial_data_stamp_+processed_stamp_);
+    emit StampShow(stamp);
   }
 }
 
@@ -354,11 +359,12 @@ void ROSThread::ImuThread()
 
 void ROSThread::TimerCallback(const ros::TimerEvent&)
 {
-  if(play_flag_ == true && pause_flag_ == false){
-    processed_stamp_ += static_cast<int64_t>(static_cast<double>(1000000) * play_rate_);
-  }
+    if(play_flag_ == true && pause_flag_ == false){
+      processed_stamp_ += static_cast<int64_t>(static_cast<double>(ros::Time::now().toNSec() - pre_timer_stamp_) * play_rate_);
+    }
+    pre_timer_stamp_ = ros::Time::now().toNSec();
 
-  if(play_flag_ == false){
-    processed_stamp_ = 0; //reset
-  }
+    if(play_flag_ == false){
+      processed_stamp_ = 0; //reset
+    }
 }
