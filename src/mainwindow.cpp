@@ -18,7 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
   connect(ui_->pushButton_3, SIGNAL(pressed()), this, SLOT(Pause()));
 
   connect(ui_->doubleSpinBox, SIGNAL(valueChanged(double)), this, SLOT(PlaySpeedChange(double)));
-  ui_->doubleSpinBox->setRange(0.1,10.0);
+  ui_->doubleSpinBox->setRange(0.1,20.0);
   ui_->doubleSpinBox->setValue(1.0);
   ui_->doubleSpinBox->setSingleStep(0.1);
   connect(ui_->checkBox, SIGNAL(stateChanged(int)), this, SLOT (LoopFlagChange(int)));
@@ -57,10 +57,9 @@ void MainWindow::TryClose()
 void MainWindow::FilePathSet()
 {
   QFileDialog dialog;
+  this->ui_->label->setText("Data is beging loaded.....");
   data_folder_path_ = dialog.getExistingDirectory();
-
   my_ros_->data_folder_path_ = data_folder_path_.toUtf8().constData();
-  this->ui_->label->setText("Data is loading.....");
 
   my_ros_->Ready();
 
@@ -109,7 +108,9 @@ void MainWindow::LoopFlagChange(int value)
 {
   if(value == 2){
     loop_flag_ = true;
+    my_ros_->loop_flag_ = true;
   }else if(value == 0){
     loop_flag_ = false;
+    my_ros_->loop_flag_ = false;
   }
 }

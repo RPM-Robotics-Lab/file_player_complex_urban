@@ -73,6 +73,7 @@
 
 
 using namespace std;
+using namespace cv;
 
 class ROSThread : public QThread
 {
@@ -88,6 +89,7 @@ public:
 
     bool play_flag_;
     bool pause_flag_;
+    bool loop_flag_;
     double play_rate_;
     string data_folder_path_;
     void Ready();
@@ -108,6 +110,14 @@ private:
     ros::Publisher velodyne_right_pub_;
     ros::Publisher sick_back_pub_;
     ros::Publisher sick_middle_pub_;
+
+    ros::Publisher stereo_left_pub_;
+    ros::Publisher stereo_right_pub_;
+    ros::Publisher omni0_pub_;
+    ros::Publisher omni1_pub_;
+    ros::Publisher omni2_pub_;
+    ros::Publisher omni3_pub_;
+    ros::Publisher omni4_pub_;
 
     map<int64_t, string>                    data_stamp_;
     map<int64_t, irp_sen_msgs::altimeter>   altimeter_data_;
@@ -142,12 +152,16 @@ private:
     void VelodyneRightThread();
     void SickBackThread();
     void SickMiddleThread();
+    void StereoThread();
+    void OmniThread();
 
     vector<string> velodyne_left_file_list_;
     vector<string> velodyne_right_file_list_;
     vector<string> sick_back_file_list_;
     vector<string> sick_middle_file_list_;
 
+    vector<string> stereo_file_list_;
+    vector<string> omni_file_list_;
 
     int64_t initial_data_stamp_;
 
@@ -161,6 +175,14 @@ private:
     pair<string,sensor_msgs::PointCloud2> velodyne_right_next_;
     pair<string,irp_sen_msgs::LaserScanArray> sick_back_next_;
     pair<string,irp_sen_msgs::LaserScanArray> sick_middle_next_;
+
+    pair<string,cv::Mat> stereo_left_next_img_;
+    pair<string,cv::Mat> stereo_right_next_img_;
+    pair<string,cv::Mat> omni0_next_img_;
+    pair<string,cv::Mat> omni1_next_img_;
+    pair<string,cv::Mat> omni2_next_img_;
+    pair<string,cv::Mat> omni3_next_img_;
+    pair<string,cv::Mat> omni4_next_img_;
 
     int GetDirList(string dir, vector<string> &files);
 

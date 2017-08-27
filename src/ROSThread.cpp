@@ -10,6 +10,7 @@ ROSThread::ROSThread(QObject *parent, QMutex *th_mutex) :
 
   processed_stamp_ = 0;
   play_rate_ = 1.0;
+  loop_flag_ = false;
 
 }
 
@@ -40,6 +41,10 @@ ROSThread::~ROSThread()
   vrs_thread_.cv_.notify_all();
   if(vrs_thread_.thread_.joinable()) vrs_thread_.thread_.join();
 
+  imu_thread_.active_ = false;
+  imu_thread_.cv_.notify_all();
+  if(imu_thread_.thread_.joinable()) imu_thread_.thread_.join();
+
   velodyne_left_thread_.active_ = false;
   velodyne_left_thread_.cv_.notify_all();
   if(velodyne_left_thread_.thread_.joinable()) velodyne_left_thread_.thread_.join();
@@ -55,6 +60,15 @@ ROSThread::~ROSThread()
   sick_middle_thread_.active_ = false;
   sick_middle_thread_.cv_.notify_all();
   if(sick_middle_thread_.thread_.joinable()) sick_middle_thread_.thread_.join();
+
+
+  stereo_thread_.active_ = false;
+  stereo_thread_.cv_.notify_all();
+  if(stereo_thread_.thread_.joinable()) stereo_thread_.thread_.join();
+
+  omni_thread_.active_ = false;
+  omni_thread_.cv_.notify_all();
+  if(omni_thread_.thread_.joinable()) omni_thread_.thread_.join();
 }
 
 void ROSThread::ros_initialize(ros::NodeHandle &n)
@@ -74,6 +88,14 @@ void ROSThread::ros_initialize(ros::NodeHandle &n)
   velodyne_right_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("/ns1/velodyne_points", 1000);
   sick_back_pub_ = nh_.advertise<irp_sen_msgs::LaserScanArray>("/lms511_back/scan", 1000);
   sick_middle_pub_ = nh_.advertise<irp_sen_msgs::LaserScanArray>("/lms511_middle/scan", 1000);
+
+  stereo_left_pub_ = nh_.advertise<sensor_msgs::Image>("/stereo/left/image_raw", 10);
+  stereo_right_pub_ = nh_.advertise<sensor_msgs::Image>("/stereo/right/image_raw", 10);
+  omni0_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image0", 10);
+  omni1_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image1", 10);
+  omni2_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image2", 10);
+  omni3_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image3", 10);
+  omni4_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image4", 10);
 }
 
 void ROSThread::run()
@@ -227,6 +249,10 @@ void ROSThread::Ready()
   GetDirList(data_folder_path_ + "/sensor_data/SICK_back",sick_back_file_list_);
   GetDirList(data_folder_path_ + "/sensor_data/SICK_middle",sick_middle_file_list_);
 
+  GetDirList(data_folder_path_ + "/image/stereo_left",stereo_file_list_);
+  GetDirList(data_folder_path_ + "/omni/cam0",omni_file_list_);
+
+
   data_stamp_thread_.thread_ = std::thread(&ROSThread::DataStampThread,this);
   altimter_thread_.thread_ = std::thread(&ROSThread::AltimeterThread,this);
   encoder_thread_.thread_ = std::thread(&ROSThread::EncoderThread,this);
@@ -239,6 +265,10 @@ void ROSThread::Ready()
   velodyne_right_thread_.thread_ = std::thread(&ROSThread::VelodyneRightThread,this);
   sick_back_thread_.thread_ = std::thread(&ROSThread::SickBackThread,this);
   sick_middle_thread_.thread_ = std::thread(&ROSThread::SickMiddleThread,this);
+
+  stereo_thread_.thread_ = std::thread(&ROSThread::StereoThread,this);
+  omni_thread_.thread_ = std::thread(&ROSThread::OmniThread,this);
+
 }
 
 void ROSThread::DataStampThread()
@@ -284,9 +314,30 @@ void ROSThread::DataStampThread()
     }else if(iter->second.compare("sick_middle") == 0){
         sick_middle_thread_.push(stamp);
         sick_middle_thread_.cv_.notify_all();
+    }else if(iter->second.compare("stereo") == 0){
+        stereo_thread_.push(stamp);
+        stereo_thread_.cv_.notify_all();
+    }else if(iter->second.compare("omni") == 0){
+        omni_thread_.push(stamp);
+        omni_thread_.cv_.notify_all();
     }
+
     emit StampShow(stamp);
+    if(loop_flag_ == true && iter == prev(data_stamp_.end(),1)){
+        iter = data_stamp_.begin();
+        processed_stamp_ = 0;
+    }
+    if(loop_flag_ == false && iter == prev(data_stamp_.end(),1)){
+        play_flag_ = false;
+        while(!play_flag_){
+            iter = data_stamp_.begin();
+            processed_stamp_ = 0;
+            usleep(10000);
+        }
+    }
   }
+  cout << "Data publish complete" << endl;
+
 }
 
 void ROSThread::AltimeterThread()
@@ -300,9 +351,11 @@ void ROSThread::AltimeterThread()
     while(!altimter_thread_.data_queue_.empty()){
       auto data = altimter_thread_.pop();
       //process
-      altimeter_pub_.publish(altimeter_data_[data]);
-
+      if(altimeter_data_.find(data) != altimeter_data_.end()){
+        altimeter_pub_.publish(altimeter_data_[data]);
+      }
     }
+    if(altimter_thread_.active_ == false) return;
   }
 }
 
@@ -317,9 +370,12 @@ void ROSThread::EncoderThread()
     while(!encoder_thread_.data_queue_.empty()){
       auto data = encoder_thread_.pop();
       //process
-      encoder_pub_.publish(encoder_data_[data]);
+      if(encoder_data_.find(data) != encoder_data_.end()){
+        encoder_pub_.publish(encoder_data_[data]);
+      }
 
     }
+    if(encoder_thread_.active_ == false) return;
   }
 }
 
@@ -334,9 +390,12 @@ void ROSThread::FogThread()
     while(!fog_thread_.data_queue_.empty()){
       auto data = fog_thread_.pop();
       //process
-      fog_pub_.publish(fog_data_[data]);
+      if(fog_data_.find(data) != fog_data_.end()){
+        fog_pub_.publish(fog_data_[data]);
+      }
 
     }
+    if(fog_thread_.active_ == false) return;
   }
 }
 
@@ -351,9 +410,12 @@ void ROSThread::GpsThread()
     while(!gps_thread_.data_queue_.empty()){
       auto data = gps_thread_.pop();
       //process
-      gps_pub_.publish(gps_data_[data]);
+      if(gps_data_.find(data) != gps_data_.end()){
+        gps_pub_.publish(gps_data_[data]);
+      }
 
     }
+    if(gps_thread_.active_ == false) return;
   }
 }
 
@@ -368,9 +430,12 @@ void ROSThread::VrsThread()
     while(!vrs_thread_.data_queue_.empty()){
       auto data = vrs_thread_.pop();
       //process
-      vrs_pub_.publish(vrs_data_[data]);
+      if(vrs_data_.find(data) != vrs_data_.end()){
+        vrs_pub_.publish(vrs_data_[data]);
+      }
 
     }
+    if(vrs_thread_.active_ == false) return;
   }
 }
 
@@ -385,9 +450,12 @@ void ROSThread::ImuThread()
     while(!imu_thread_.data_queue_.empty()){
       auto data = imu_thread_.pop();
       //process
-      imu_pub_.publish(imu_data_[data]);
+      if(imu_data_.find(data) != imu_data_.end()){
+        imu_pub_.publish(imu_data_[data]);
+      }
 
     }
+    if(imu_thread_.active_ == false) return;
   }
 }
 
@@ -451,22 +519,25 @@ void ROSThread::VelodyneLeftThread()
       cloud.clear();
       sensor_msgs::PointCloud2 publish_cloud;
       int current_file_index = find(velodyne_left_file_list_.begin(),velodyne_left_file_list_.end(),to_string(data)+".bin") - velodyne_left_file_list_.begin();
-      string next_file_name = data_folder_path_ + "/sensor_data/VLP_left" +"/"+ velodyne_left_file_list_[current_file_index+1];
+      if(current_file_index < velodyne_left_file_list_.size()-1){
+          string next_file_name = data_folder_path_ + "/sensor_data/VLP_left" +"/"+ velodyne_left_file_list_[current_file_index+1];
 
-      ifstream file;
-      file.open(next_file_name, ios::in|ios::binary);
-      while(!file.eof()){
-          pcl::PointXYZI point;
-          file.read(reinterpret_cast<char *>(&point.x), sizeof(float));
-          file.read(reinterpret_cast<char *>(&point.y), sizeof(float));
-          file.read(reinterpret_cast<char *>(&point.z), sizeof(float));
-          file.read(reinterpret_cast<char *>(&point.intensity), sizeof(float));
-          cloud.points.push_back (point);
+          ifstream file;
+          file.open(next_file_name, ios::in|ios::binary);
+          while(!file.eof()){
+              pcl::PointXYZI point;
+              file.read(reinterpret_cast<char *>(&point.x), sizeof(float));
+              file.read(reinterpret_cast<char *>(&point.y), sizeof(float));
+              file.read(reinterpret_cast<char *>(&point.z), sizeof(float));
+              file.read(reinterpret_cast<char *>(&point.intensity), sizeof(float));
+              cloud.points.push_back (point);
+          }
+          file.close();
+          pcl::toROSMsg(cloud, publish_cloud);
+          velodyne_left_next_ = make_pair(velodyne_left_file_list_[current_file_index+1], publish_cloud);
       }
-      file.close();
-      pcl::toROSMsg(cloud, publish_cloud);
-      velodyne_left_next_ = make_pair(velodyne_left_file_list_[current_file_index+1], publish_cloud);
     }
+    if(velodyne_left_thread_.active_ == false) return;
   }
 }
 void ROSThread::VelodyneRightThread()
@@ -519,22 +590,26 @@ void ROSThread::VelodyneRightThread()
       cloud.clear();
       sensor_msgs::PointCloud2 publish_cloud;
       int current_file_index = find(velodyne_right_file_list_.begin(),velodyne_right_file_list_.end(),to_string(data)+".bin") - velodyne_right_file_list_.begin();
-      string next_file_name = data_folder_path_ + "/sensor_data/VLP_right" +"/"+ velodyne_right_file_list_[current_file_index+1];
+      if(current_file_index < velodyne_right_file_list_.size()-1){
+          string next_file_name = data_folder_path_ + "/sensor_data/VLP_right" +"/"+ velodyne_right_file_list_[current_file_index+1];
 
-      ifstream file;
-      file.open(next_file_name, ios::in|ios::binary);
-      while(!file.eof()){
-          pcl::PointXYZI point;
-          file.read(reinterpret_cast<char *>(&point.x), sizeof(float));
-          file.read(reinterpret_cast<char *>(&point.y), sizeof(float));
-          file.read(reinterpret_cast<char *>(&point.z), sizeof(float));
-          file.read(reinterpret_cast<char *>(&point.intensity), sizeof(float));
-          cloud.points.push_back (point);
+          ifstream file;
+          file.open(next_file_name, ios::in|ios::binary);
+          while(!file.eof()){
+              pcl::PointXYZI point;
+              file.read(reinterpret_cast<char *>(&point.x), sizeof(float));
+              file.read(reinterpret_cast<char *>(&point.y), sizeof(float));
+              file.read(reinterpret_cast<char *>(&point.z), sizeof(float));
+              file.read(reinterpret_cast<char *>(&point.intensity), sizeof(float));
+              cloud.points.push_back (point);
+          }
+          file.close();
+          pcl::toROSMsg(cloud, publish_cloud);
+          velodyne_right_next_ = make_pair(velodyne_right_file_list_[current_file_index+1], publish_cloud);
       }
-      file.close();
-      pcl::toROSMsg(cloud, publish_cloud);
-      velodyne_right_next_ = make_pair(velodyne_right_file_list_[current_file_index+1], publish_cloud);
+
     }
+    if(velodyne_right_thread_.active_ == false) return;
   }
 }
 void ROSThread::SickBackThread()
@@ -594,33 +669,38 @@ void ROSThread::SickBackThread()
       irp_sen_msgs::LaserScanArray publish_data;
       sensor_msgs::LaserScan scan_data;
       int current_file_index = find(sick_back_file_list_.begin(),sick_back_file_list_.end(),to_string(data)+".bin") - sick_back_file_list_.begin();
-      string next_file_name = data_folder_path_ + "/sensor_data/SICK_back" +"/"+ sick_back_file_list_[current_file_index+1];
+      if(current_file_index < sick_back_file_list_.size()-1){
+          string next_file_name = data_folder_path_ + "/sensor_data/SICK_back" +"/"+ sick_back_file_list_[current_file_index+1];
 
-      ifstream file;
-      file.open(next_file_name, ios::in|ios::binary);
-      while(!file.eof()){
-          float range;
-          float intensity;
-          file.read(reinterpret_cast <char *>(&range), sizeof(float));
-          file.read(reinterpret_cast <char *>(&intensity), sizeof(float));
-          scan_data.ranges.push_back(range);
-          scan_data.intensities.push_back(intensity);
+          ifstream file;
+          file.open(next_file_name, ios::in|ios::binary);
+          while(!file.eof()){
+              float range;
+              float intensity;
+              file.read(reinterpret_cast <char *>(&range), sizeof(float));
+              file.read(reinterpret_cast <char *>(&intensity), sizeof(float));
+              scan_data.ranges.push_back(range);
+              scan_data.intensities.push_back(intensity);
+          }
+          file.close();
+          char* pEnd;
+          scan_data.header.stamp.fromNSec(strtoll(sick_back_file_list_[current_file_index+1].substr(0,19).c_str(),&pEnd,10));
+          scan_data.header.frame_id = "back_sick";
+          scan_data.angle_min = -1.65806281567;
+          scan_data.angle_max = -1.65806281567;
+          scan_data.angle_increment = 0.0116355288774;
+          scan_data.time_increment = 0.0;
+          scan_data.range_min = 0.0;
+          scan_data.range_max = 81.0;
+          publish_data.LaserScans.push_back(scan_data);
+          publish_data.size = publish_data.LaserScans.size();
+          sick_back_next_ = make_pair(sick_back_file_list_[current_file_index+1], publish_data);
       }
-      file.close();
-      char* pEnd;
-      scan_data.header.stamp.fromNSec(strtoll(sick_back_file_list_[current_file_index+1].substr(0,19).c_str(),&pEnd,10));
-      scan_data.header.frame_id = "back_sick";
-      scan_data.angle_min = -1.65806281567;
-      scan_data.angle_max = -1.65806281567;
-      scan_data.angle_increment = 0.0116355288774;
-      scan_data.time_increment = 0.0;
-      scan_data.range_min = 0.0;
-      scan_data.range_max = 81.0;
-      publish_data.LaserScans.push_back(scan_data);
-      publish_data.size = publish_data.LaserScans.size();
-      sick_back_next_ = make_pair(sick_back_file_list_[current_file_index+1], publish_data);
+
     }
+    if(sick_back_thread_.active_ == false) return;
   }
+
 }
 void ROSThread::SickMiddleThread()
 {
@@ -678,35 +758,255 @@ void ROSThread::SickMiddleThread()
       irp_sen_msgs::LaserScanArray publish_data;
       sensor_msgs::LaserScan scan_data;
       int current_file_index = find(sick_middle_file_list_.begin(),sick_middle_file_list_.end(),to_string(data)+".bin") - sick_middle_file_list_.begin();
-      string next_file_name = data_folder_path_ + "/sensor_data/SICK_middle" +"/"+ sick_middle_file_list_[current_file_index+1];
+      if(current_file_index < sick_middle_file_list_.size()-1){
+          string next_file_name = data_folder_path_ + "/sensor_data/SICK_middle" +"/"+ sick_middle_file_list_[current_file_index+1];
 
-      ifstream file;
-      file.open(next_file_name, ios::in|ios::binary);
-      while(!file.eof()){
-          float range;
-          float intensity;
-          file.read(reinterpret_cast <char *>(&range), sizeof(range));
-          file.read(reinterpret_cast <char *>(&intensity), sizeof(intensity));
-          scan_data.ranges.push_back(range);
-          scan_data.intensities.push_back((intensity));
+          ifstream file;
+          file.open(next_file_name, ios::in|ios::binary);
+          while(!file.eof()){
+              float range;
+              float intensity;
+              file.read(reinterpret_cast <char *>(&range), sizeof(range));
+              file.read(reinterpret_cast <char *>(&intensity), sizeof(intensity));
+              scan_data.ranges.push_back(range);
+              scan_data.intensities.push_back((intensity));
+          }
+          file.close();
+          char* pEnd;
+          scan_data.header.stamp.fromNSec(strtoll(sick_middle_file_list_[current_file_index+1].substr(0,19).c_str(),&pEnd,10));
+          scan_data.header.frame_id = "middle_sick";
+          scan_data.angle_min = -1.65806281567;
+          scan_data.angle_max = -1.65806281567;
+          scan_data.angle_increment = 0.0116355288774;
+          scan_data.time_increment = 0.0;
+          scan_data.range_min = 0.0;
+          scan_data.range_max = 81.0;
+          publish_data.LaserScans.push_back(scan_data);
+          publish_data.size = publish_data.LaserScans.size();
+          sick_middle_next_ = make_pair(sick_middle_file_list_[current_file_index+1], publish_data);
       }
-      file.close();
-      char* pEnd;
-      scan_data.header.stamp.fromNSec(strtoll(sick_middle_file_list_[current_file_index+1].substr(0,19).c_str(),&pEnd,10));
-      scan_data.header.frame_id = "middle_sick";
-      scan_data.angle_min = -1.65806281567;
-      scan_data.angle_max = -1.65806281567;
-      scan_data.angle_increment = 0.0116355288774;
-      scan_data.time_increment = 0.0;
-      scan_data.range_min = 0.0;
-      scan_data.range_max = 81.0;
-      publish_data.LaserScans.push_back(scan_data);
-      publish_data.size = publish_data.LaserScans.size();
-      sick_middle_next_ = make_pair(sick_middle_file_list_[current_file_index+1], publish_data);
+
     }
+    if(sick_middle_thread_.active_ == false) return;
   }
+
 }
 
+
+void ROSThread::StereoThread()
+{
+  while(1){
+    std::unique_lock<std::mutex> ul(stereo_thread_.mutex_);
+    stereo_thread_.cv_.wait(ul);
+    if(stereo_thread_.active_ == false) return;
+    ul.unlock();
+
+    while(!stereo_thread_.data_queue_.empty()){
+      auto data = stereo_thread_.pop();
+      //process
+      //publish
+      if(to_string(data)+".jpeg" == stereo_left_next_img_.first){
+        cv_bridge::CvImage left_out_msg;
+        left_out_msg.header.stamp.fromNSec(data);
+        left_out_msg.header.frame_id = "stereo_left";
+        left_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        left_out_msg.image    = stereo_left_next_img_.second;
+
+        cv_bridge::CvImage right_out_msg;
+        right_out_msg.header.stamp.fromNSec(data);
+        right_out_msg.header.frame_id = "stereo_right";
+        right_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        right_out_msg.image    = stereo_right_next_img_.second;
+
+        stereo_left_pub_.publish(left_out_msg.toImageMsg());
+        stereo_right_pub_.publish(right_out_msg.toImageMsg());
+
+      }else{
+        cout << "Re-load stereo image from image path" << endl;
+
+        string current_stereo_left_name = data_folder_path_ + "/image/stereo_left" +"/"+ to_string(data)+".jpeg";
+        string current_stereo_right_name = data_folder_path_ + "/image/stereo_right" +"/"+ to_string(data)+".jpeg";
+        cv::Mat current_left_image;
+        cv::Mat current_right_image;
+        current_left_image = imread(current_stereo_left_name, CV_LOAD_IMAGE_COLOR);
+        current_right_image = imread(current_stereo_right_name, CV_LOAD_IMAGE_COLOR);
+
+        cv_bridge::CvImage left_out_msg;
+        left_out_msg.header.stamp.fromNSec(data);
+        left_out_msg.header.frame_id = "stereo_left";
+        left_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        left_out_msg.image    = current_left_image;
+
+        cv_bridge::CvImage right_out_msg;
+        right_out_msg.header.stamp.fromNSec(data);
+        right_out_msg.header.frame_id = "stereo_right";
+        right_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        right_out_msg.image    = current_right_image;
+
+        stereo_left_pub_.publish(left_out_msg.toImageMsg());
+        stereo_right_pub_.publish(right_out_msg.toImageMsg());
+      }
+
+      //load next image
+      int current_img_index = find(stereo_file_list_.begin(),stereo_file_list_.end(),to_string(data)+".jpeg") - stereo_file_list_.begin();
+      if(current_img_index < stereo_file_list_.size()-1){
+
+          string next_stereo_left_name = data_folder_path_ + "/image/stereo_left" +"/"+ stereo_file_list_[current_img_index+1];
+          string next_stereo_right_name = data_folder_path_ + "/image/stereo_right" +"/"+ stereo_file_list_[current_img_index+1];
+          cv::Mat next_left_image;
+          cv::Mat next_right_image;
+          next_left_image = imread(next_stereo_left_name, CV_LOAD_IMAGE_COLOR);
+          next_right_image = imread(next_stereo_right_name, CV_LOAD_IMAGE_COLOR);
+          stereo_left_next_img_ = make_pair(stereo_file_list_[current_img_index+1], next_left_image);
+          stereo_right_next_img_ = make_pair(stereo_file_list_[current_img_index+1], next_right_image);
+      }
+    }
+    if(stereo_thread_.active_ == false) return;
+  }
+}
+void ROSThread::OmniThread()
+{
+  while(1){
+    std::unique_lock<std::mutex> ul(omni_thread_.mutex_);
+    omni_thread_.cv_.wait(ul);
+    if(omni_thread_.active_ == false) return;
+    ul.unlock();
+
+    while(!omni_thread_.data_queue_.empty()){
+      auto data = omni_thread_.pop();
+      //process
+      //publish
+      if(to_string(data)+".jpeg" == omni0_next_img_.first){
+        cv_bridge::CvImage onmi0_out_msg;
+        onmi0_out_msg.header.stamp.fromNSec(data);
+        onmi0_out_msg.header.frame_id = "omni0";
+        onmi0_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        onmi0_out_msg.image    = omni0_next_img_.second;
+
+        cv_bridge::CvImage onmi1_out_msg;
+        onmi1_out_msg.header.stamp.fromNSec(data);
+        onmi1_out_msg.header.frame_id = "omni1";
+        onmi1_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        onmi1_out_msg.image    = omni1_next_img_.second;
+
+        cv_bridge::CvImage onmi2_out_msg;
+        onmi2_out_msg.header.stamp.fromNSec(data);
+        onmi2_out_msg.header.frame_id = "omni2";
+        onmi2_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        onmi2_out_msg.image    = omni2_next_img_.second;
+
+        cv_bridge::CvImage onmi3_out_msg;
+        onmi3_out_msg.header.stamp.fromNSec(data);
+        onmi3_out_msg.header.frame_id = "omni3";
+        onmi3_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        onmi3_out_msg.image    = omni3_next_img_.second;
+
+        cv_bridge::CvImage onmi4_out_msg;
+        onmi4_out_msg.header.stamp.fromNSec(data);
+        onmi4_out_msg.header.frame_id = "omni4";
+        onmi4_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        onmi4_out_msg.image    = omni4_next_img_.second;
+
+        omni0_pub_.publish(onmi0_out_msg.toImageMsg());
+        omni1_pub_.publish(onmi1_out_msg.toImageMsg());
+        omni2_pub_.publish(onmi2_out_msg.toImageMsg());
+        omni3_pub_.publish(onmi3_out_msg.toImageMsg());
+        omni4_pub_.publish(onmi4_out_msg.toImageMsg());
+
+      }else{
+        cout << "Re-load omni image from image path" << endl;
+        string current_omni0_name = data_folder_path_ + "/omni/cam0" +"/"+ to_string(data)+".jpeg";
+        string current_omni1_name = data_folder_path_ + "/omni/cam1" +"/"+ to_string(data)+".jpeg";
+        string current_omni2_name = data_folder_path_ + "/omni/cam2" +"/"+ to_string(data)+".jpeg";
+        string current_omni3_name = data_folder_path_ + "/omni/cam3" +"/"+ to_string(data)+".jpeg";
+        string current_omni4_name = data_folder_path_ + "/omni/cam4" +"/"+ to_string(data)+".jpeg";
+        cv::Mat omni0_image;
+        cv::Mat omni1_image;
+        cv::Mat omni2_image;
+        cv::Mat omni3_image;
+        cv::Mat omni4_image;
+        omni0_image = imread(current_omni0_name, CV_LOAD_IMAGE_COLOR);
+        omni1_image = imread(current_omni1_name, CV_LOAD_IMAGE_COLOR);
+        omni2_image = imread(current_omni2_name, CV_LOAD_IMAGE_COLOR);
+        omni3_image = imread(current_omni3_name, CV_LOAD_IMAGE_COLOR);
+        omni4_image = imread(current_omni4_name, CV_LOAD_IMAGE_COLOR);
+        cv::cvtColor(omni0_image, omni0_image, cv::COLOR_RGB2BGR);
+        cv::cvtColor(omni1_image, omni1_image, cv::COLOR_RGB2BGR);
+        cv::cvtColor(omni2_image, omni2_image, cv::COLOR_RGB2BGR);
+        cv::cvtColor(omni3_image, omni3_image, cv::COLOR_RGB2BGR);
+        cv::cvtColor(omni4_image, omni4_image, cv::COLOR_RGB2BGR);
+
+        cv_bridge::CvImage onmi0_out_msg;
+        onmi0_out_msg.header.stamp.fromNSec(data);
+        onmi0_out_msg.header.frame_id = "omni0";
+        onmi0_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        onmi0_out_msg.image    = omni0_image;
+
+        cv_bridge::CvImage onmi1_out_msg;
+        onmi1_out_msg.header.stamp.fromNSec(data);
+        onmi1_out_msg.header.frame_id = "omni1";
+        onmi1_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        onmi1_out_msg.image    = omni1_image;
+
+        cv_bridge::CvImage onmi2_out_msg;
+        onmi2_out_msg.header.stamp.fromNSec(data);
+        onmi2_out_msg.header.frame_id = "omni2";
+        onmi2_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        onmi2_out_msg.image    = omni2_image;
+
+        cv_bridge::CvImage onmi3_out_msg;
+        onmi3_out_msg.header.stamp.fromNSec(data);
+        onmi3_out_msg.header.frame_id = "omni3";
+        onmi3_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        onmi3_out_msg.image    = omni3_image;
+
+        cv_bridge::CvImage onmi4_out_msg;
+        onmi4_out_msg.header.stamp.fromNSec(data);
+        onmi4_out_msg.header.frame_id = "omni4";
+        onmi4_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        onmi4_out_msg.image    = omni4_image;
+
+        omni0_pub_.publish(onmi0_out_msg.toImageMsg());
+        omni1_pub_.publish(onmi1_out_msg.toImageMsg());
+        omni2_pub_.publish(onmi2_out_msg.toImageMsg());
+        omni3_pub_.publish(onmi3_out_msg.toImageMsg());
+        omni4_pub_.publish(onmi4_out_msg.toImageMsg());
+      }
+
+      //load next image
+      int current_img_index = find(omni_file_list_.begin(),omni_file_list_.end(),to_string(data)+".jpeg") - omni_file_list_.begin();
+      if(current_img_index < omni_file_list_.size()-1){
+          string next_omni0_name = data_folder_path_ + "/omni/cam0" +"/"+ omni_file_list_[current_img_index+1];
+          string next_omni1_name = data_folder_path_ + "/omni/cam1" +"/"+ omni_file_list_[current_img_index+1];
+          string next_omni2_name = data_folder_path_ + "/omni/cam2" +"/"+ omni_file_list_[current_img_index+1];
+          string next_omni3_name = data_folder_path_ + "/omni/cam3" +"/"+ omni_file_list_[current_img_index+1];
+          string next_omni4_name = data_folder_path_ + "/omni/cam4" +"/"+ omni_file_list_[current_img_index+1];
+          cv::Mat omni0_image;
+          cv::Mat omni1_image;
+          cv::Mat omni2_image;
+          cv::Mat omni3_image;
+          cv::Mat omni4_image;
+          omni0_image = imread(next_omni0_name, CV_LOAD_IMAGE_COLOR);
+          omni1_image = imread(next_omni1_name, CV_LOAD_IMAGE_COLOR);
+          omni2_image = imread(next_omni2_name, CV_LOAD_IMAGE_COLOR);
+          omni3_image = imread(next_omni3_name, CV_LOAD_IMAGE_COLOR);
+          omni4_image = imread(next_omni4_name, CV_LOAD_IMAGE_COLOR);
+          cv::cvtColor(omni0_image, omni0_image, cv::COLOR_RGB2BGR);
+          cv::cvtColor(omni1_image, omni1_image, cv::COLOR_RGB2BGR);
+          cv::cvtColor(omni2_image, omni2_image, cv::COLOR_RGB2BGR);
+          cv::cvtColor(omni3_image, omni3_image, cv::COLOR_RGB2BGR);
+          cv::cvtColor(omni4_image, omni4_image, cv::COLOR_RGB2BGR);
+
+          omni0_next_img_ = make_pair(omni_file_list_[current_img_index+1], omni0_image);
+          omni1_next_img_ = make_pair(omni_file_list_[current_img_index+1], omni1_image);
+          omni2_next_img_ = make_pair(omni_file_list_[current_img_index+1], omni2_image);
+          omni3_next_img_ = make_pair(omni_file_list_[current_img_index+1], omni3_image);
+          omni4_next_img_ = make_pair(omni_file_list_[current_img_index+1], omni4_image);
+      }
+    }
+    if(omni_thread_.active_ == false) return;
+  }
+}
 int ROSThread::GetDirList(string dir, vector<string> &files)
 {
 
