@@ -40,10 +40,21 @@ ROSThread::~ROSThread()
   vrs_thread_.cv_.notify_all();
   if(vrs_thread_.thread_.joinable()) vrs_thread_.thread_.join();
 
-  imu_thread_.active_ = false;
-  imu_thread_.cv_.notify_all();
-  if(imu_thread_.thread_.joinable()) imu_thread_.thread_.join();
+  velodyne_left_thread_.active_ = false;
+  velodyne_left_thread_.cv_.notify_all();
+  if(velodyne_left_thread_.thread_.joinable()) velodyne_left_thread_.thread_.join();
 
+  velodyne_right_thread_.active_ = false;
+  velodyne_right_thread_.cv_.notify_all();
+  if(velodyne_right_thread_.thread_.joinable()) velodyne_right_thread_.thread_.join();
+
+  sick_back_thread_.active_ = false;
+  sick_back_thread_.cv_.notify_all();
+  if(sick_back_thread_.thread_.joinable()) sick_back_thread_.thread_.join();
+
+  sick_middle_thread_.active_ = false;
+  sick_middle_thread_.cv_.notify_all();
+  if(sick_middle_thread_.thread_.joinable()) sick_middle_thread_.thread_.join();
 }
 
 void ROSThread::ros_initialize(ros::NodeHandle &n)
@@ -59,7 +70,10 @@ void ROSThread::ros_initialize(ros::NodeHandle &n)
   gps_pub_ = nh_.advertise<sensor_msgs::NavSatFix>("/gps/fix", 1000);
   vrs_pub_ = nh_.advertise<irp_sen_msgs::vrs>("/vrs_gps_data", 1000);
   imu_pub_ = nh_.advertise<irp_sen_msgs::imu>("/xsens_imu_data", 1000);
-
+  velodyne_left_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("/ns2/velodyne_points", 1000);
+  velodyne_right_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("/ns2/velodyne_points", 1000);
+  sick_back_pub_ = nh_.advertise<irp_sen_msgs::LaserScanArray>("/lms511_back/scan", 1000);
+  sick_middle_pub_ = nh_.advertise<irp_sen_msgs::LaserScanArray>("/lms511_middle/scan", 1000);
 }
 
 void ROSThread::run()
@@ -208,6 +222,11 @@ void ROSThread::Ready()
   cout << "IMU data are loaded" << endl;
   fclose(fp);
 
+  GetDirList(data_folder_path_ + "/sensor_data/VLP_left",velodyne_left_file_list_);
+  GetDirList(data_folder_path_ + "/sensor_data/VLP_right",velodyne_right_file_list_);
+  GetDirList(data_folder_path_ + "/sensor_data/SICK_back",sick_back_file_list_);
+  GetDirList(data_folder_path_ + "/sensor_data/SICK_middle",sick_middle_file_list_);
+
   data_stamp_thread_.thread_ = std::thread(&ROSThread::DataStampThread,this);
   altimter_thread_.thread_ = std::thread(&ROSThread::AltimeterThread,this);
   encoder_thread_.thread_ = std::thread(&ROSThread::EncoderThread,this);
@@ -216,6 +235,10 @@ void ROSThread::Ready()
   vrs_thread_.thread_ = std::thread(&ROSThread::VrsThread,this);
   imu_thread_.thread_ = std::thread(&ROSThread::ImuThread,this);
 
+  velodyne_left_thread_.thread_ = std::thread(&ROSThread::VelodyneLeftThread,this);
+  velodyne_right_thread_.thread_ = std::thread(&ROSThread::VelodyneRightThread,this);
+  sick_back_thread_.thread_ = std::thread(&ROSThread::SickBackThread,this);
+  sick_middle_thread_.thread_ = std::thread(&ROSThread::SickMiddleThread,this);
 }
 
 void ROSThread::DataStampThread()
@@ -249,8 +272,19 @@ void ROSThread::DataStampThread()
     }else if(iter->second.compare("imu") == 0){
       imu_thread_.push(stamp);
       imu_thread_.cv_.notify_all();
+    }else if(iter->second.compare("velodyne_left") == 0){
+        velodyne_left_thread_.push(stamp);
+        velodyne_left_thread_.cv_.notify_all();
+    }else if(iter->second.compare("velodyne_right") == 0){
+        velodyne_right_thread_.push(stamp);
+        velodyne_right_thread_.cv_.notify_all();
+    }else if(iter->second.compare("sick_back") == 0){
+        sick_back_thread_.push(stamp);
+        sick_back_thread_.cv_.notify_all();
+    }else if(iter->second.compare("sick_middle") == 0){
+        sick_middle_thread_.push(stamp);
+        sick_middle_thread_.cv_.notify_all();
     }
-
     emit StampShow(stamp);
   }
 }
@@ -368,3 +402,107 @@ void ROSThread::TimerCallback(const ros::TimerEvent&)
       processed_stamp_ = 0; //reset
     }
 }
+void ROSThread::VelodyneLeftThread()
+{
+  while(1){
+    std::unique_lock<std::mutex> ul(velodyne_left_thread_.mutex_);
+    velodyne_left_thread_.cv_.wait(ul);
+    if(velodyne_left_thread_.active_ == false) return;
+    ul.unlock();
+
+    while(!velodyne_left_thread_.data_queue_.empty()){
+      auto data = velodyne_left_thread_.pop();
+      //process
+      //publish data
+
+
+      //load next data
+      sensor_msgs::PointCloud2 tmp_data;
+      int current_file_index = find(velodyne_left_file_list_.begin(),velodyne_left_file_list_.end(),to_string(data)+".bin") - velodyne_left_file_list_.begin();
+      string next_file_name = data_folder_path_ + "/sensor_data/VLP_left" +"/"+ velodyne_left_file_list_[current_file_index+1];
+      streampos size;
+      char *memblock;
+      ifstream file;
+      file.open(next_file_name, ios::in|ios::binary);
+      size = file.tellg();
+      memblock = new char [size];
+      file.seekg(0, ios::beg);
+      file.read(memblock, size);
+      file.close();
+
+
+      delete memblock;
+    }
+  }
+}
+void ROSThread::VelodyneRightThread()
+{
+  while(1){
+    std::unique_lock<std::mutex> ul(velodyne_right_thread_.mutex_);
+    velodyne_right_thread_.cv_.wait(ul);
+    if(velodyne_right_thread_.active_ == false) return;
+    ul.unlock();
+
+    while(!velodyne_right_thread_.data_queue_.empty()){
+      auto data = velodyne_right_thread_.pop();
+      //process
+
+    }
+  }
+}
+void ROSThread::SickBackThread()
+{
+  while(1){
+    std::unique_lock<std::mutex> ul(sick_back_thread_.mutex_);
+    sick_back_thread_.cv_.wait(ul);
+    if(sick_back_thread_.active_ == false) return;
+    ul.unlock();
+
+    while(!sick_back_thread_.data_queue_.empty()){
+      auto data = sick_back_thread_.pop();
+      //process
+
+    }
+  }
+}
+void ROSThread::SickMiddleThread()
+{
+  while(1){
+    std::unique_lock<std::mutex> ul(sick_middle_thread_.mutex_);
+    sick_middle_thread_.cv_.wait(ul);
+    if(sick_middle_thread_.active_ == false) return;
+    ul.unlock();
+
+    while(!sick_middle_thread_.data_queue_.empty()){
+      auto data = sick_middle_thread_.pop();
+      //process
+
+    }
+  }
+}
+
+int ROSThread::GetDirList(string dir, vector<string> &files)
+{
+
+  vector<string> tmp_files;
+  struct dirent **namelist;
+  int n;
+  n = scandir(dir.c_str(),&namelist, 0 , alphasort);
+  if (n < 0)
+      perror("scandir");
+  else {
+      while (n--) {
+      if(string(namelist[n]->d_name) != "." && string(namelist[n]->d_name) != ".."){
+        tmp_files.push_back(string(namelist[n]->d_name));
+      }
+      free(namelist[n]);
+      }
+      free(namelist);
+  }
+
+  for(auto iter = tmp_files.rbegin() ; iter!= tmp_files.rend() ; iter++){
+    files.push_back(*iter);
+  }
+    return 0;
+}
+

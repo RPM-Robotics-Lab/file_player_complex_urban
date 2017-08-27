@@ -59,6 +59,17 @@
 #include "rosbag/bag.h"
 #include <ros/transport_hints.h>
 #include "file_player/datathread.h"
+#include <sys/types.h>
+
+#include <algorithm>
+#include <iterator>
+#include <sys/types.h>
+#include <dirent.h>
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
 
 using namespace std;
 
@@ -92,6 +103,10 @@ private:
     ros::Publisher gps_pub_;
     ros::Publisher vrs_pub_;
     ros::Publisher imu_pub_;
+    ros::Publisher velodyne_left_pub_;
+    ros::Publisher velodyne_right_pub_;
+    ros::Publisher sick_back_pub_;
+    ros::Publisher sick_middle_pub_;
 
     map<int64_t, string>                    data_stamp_;
     map<int64_t, irp_sen_msgs::altimeter>   altimeter_data_;
@@ -122,6 +137,16 @@ private:
     void GpsThread();
     void VrsThread();
     void ImuThread();
+    void VelodyneLeftThread();
+    void VelodyneRightThread();
+    void SickBackThread();
+    void SickMiddleThread();
+
+    vector<string> velodyne_left_file_list_;
+    vector<string> velodyne_right_file_list_;
+    vector<string> sick_back_file_list_;
+    vector<string> sick_middle_file_list_;
+
 
     int64_t initial_data_stamp_;
 
@@ -130,6 +155,14 @@ private:
     void TimerCallback(const ros::TimerEvent&);
     int64_t processed_stamp_;
     int64_t pre_timer_stamp_;
+
+    pair<string,sensor_msgs::PointCloud2> velodyne_left_next_;
+    pair<string,sensor_msgs::PointCloud2> velodyne_right_next_;
+    pair<string,irp_sen_msgs::LaserScanArray> sick_back_next_;
+    pair<string,irp_sen_msgs::LaserScanArray> sick_middle_next_;
+
+    int GetDirList(string dir, vector<string> &files);
+
 
 public slots:
 
