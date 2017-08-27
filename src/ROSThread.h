@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <QObject>
 #include <QThread>
 #include <QMutex>

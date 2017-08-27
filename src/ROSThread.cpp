@@ -123,6 +123,7 @@ void ROSThread::Ready()
      cout << "Please check file path. Input path is wrong" << endl;
      return;
   }
+  f.close();
 
   //Read CSV file and make map
   FILE *fp;
@@ -257,10 +258,154 @@ void ROSThread::Ready()
   GetDirList(data_folder_path_ + "/sensor_data/VLP_right",velodyne_right_file_list_);
   GetDirList(data_folder_path_ + "/sensor_data/SICK_back",sick_back_file_list_);
   GetDirList(data_folder_path_ + "/sensor_data/SICK_middle",sick_middle_file_list_);
-
   GetDirList(data_folder_path_ + "/image/stereo_left",stereo_file_list_);
   GetDirList(data_folder_path_ + "/omni/cam0",omni_file_list_);
 
+  //load camera info
+
+  string line;
+  ifstream in;
+  string data;
+
+  in.open((data_folder_path_+"/image/stereo_left_info.csv").c_str());
+  getline(in, line);
+  stringstream sep_left(line);
+  int index = 0;
+  while (getline(sep_left, data, ',')) {
+      if(index == 0) stereo_left_info_.height = stod(data);
+      if(index == 1) stereo_left_info_.width = stod(data);
+      if(index >= 2 && index <= 6) stereo_left_info_.D.push_back(atof(data.c_str()));
+      if(index >= 7 && index <= 15) stereo_left_info_.K[index-7] = atof(data.c_str());
+      if(index >= 16 && index <= 24) stereo_left_info_.R[index-16] = atof(data.c_str());
+      if(index >= 25 && index <= 36) stereo_left_info_.P[index-25] = atof(data.c_str());
+      if(index == 37) stereo_left_info_.binning_x = atof(data.c_str());
+      if(index == 38){
+          stereo_left_info_.binning_y = atof(data.c_str());
+          break;
+      }
+      index++;
+  }
+  in.close();
+
+  in.open((data_folder_path_+"/image/stereo_right_info.csv").c_str());
+  getline(in, line);
+  stringstream sep_right(line);
+  index = 0;
+  while (getline(sep_right, data, ',')) {
+      if(index == 0) stereo_right_info_.height = stod(data);
+      if(index == 1) stereo_right_info_.width = stod(data);
+      if(index >= 2 && index <= 6) stereo_right_info_.D.push_back(atof(data.c_str()));
+      if(index >= 7 && index <= 15) stereo_right_info_.K[index-7] = atof(data.c_str());
+      if(index >= 16 && index <= 24) stereo_right_info_.R[index-16] = atof(data.c_str());
+      if(index >= 25 && index <= 36) stereo_right_info_.P[index-25] = atof(data.c_str());
+      if(index == 37) stereo_right_info_.binning_x = atof(data.c_str());
+      if(index == 38){
+          stereo_right_info_.binning_y = atof(data.c_str());
+          break;
+      }
+      index++;
+  }
+  in.close();
+
+  in.open((data_folder_path_+"/omni/cam0_info.csv").c_str());
+  getline(in, line);
+  stringstream sep_omni0(line);
+  index = 0;
+  while (getline(sep_omni0, data, ',')) {
+      if(index == 0) omni0_info_.height = stod(data);
+      if(index == 1) omni0_info_.width = stod(data);
+      if(index >= 2 && index <= 6) omni0_info_.D.push_back(atof(data.c_str()));
+      if(index >= 7 && index <= 15) omni0_info_.K[index-7] = atof(data.c_str());
+      if(index >= 16 && index <= 24) omni0_info_.R[index-16] = atof(data.c_str());
+      if(index >= 25 && index <= 36) omni0_info_.P[index-25] = atof(data.c_str());
+      if(index == 37) omni0_info_.binning_x = atof(data.c_str());
+      if(index == 38){
+          omni0_info_.binning_y = atof(data.c_str());
+          break;
+      }
+      index++;
+  }
+  in.close();
+
+  in.open((data_folder_path_+"/omni/cam1_info.csv").c_str());
+  getline(in, line);
+  stringstream sep_omni1(line);
+  index = 0;
+  while (getline(sep_omni1, data, ',')) {
+      if(index == 0) omni1_info_.height = stod(data);
+      if(index == 1) omni1_info_.width = stod(data);
+      if(index >= 2 && index <= 6) omni1_info_.D.push_back(atof(data.c_str()));
+      if(index >= 7 && index <= 15) omni1_info_.K[index-7] = atof(data.c_str());
+      if(index >= 16 && index <= 24) omni1_info_.R[index-16] = atof(data.c_str());
+      if(index >= 25 && index <= 36) omni1_info_.P[index-25] = atof(data.c_str());
+      if(index == 37) omni1_info_.binning_x = atof(data.c_str());
+      if(index == 38){
+          omni1_info_.binning_y = atof(data.c_str());
+          break;
+      }
+      index++;
+  }
+  in.close();
+
+  in.open((data_folder_path_+"/omni/cam2_info.csv").c_str());
+  getline(in, line);
+  stringstream sep_omni2(line);
+  index = 0;
+  while (getline(sep_omni2, data, ',')) {
+      if(index == 0) omni2_info_.height = stod(data);
+      if(index == 1) omni2_info_.width = stod(data);
+      if(index >= 2 && index <= 6) omni2_info_.D.push_back(atof(data.c_str()));
+      if(index >= 7 && index <= 15) omni2_info_.K[index-7] = atof(data.c_str());
+      if(index >= 16 && index <= 24) omni2_info_.R[index-16] = atof(data.c_str());
+      if(index >= 25 && index <= 36) omni2_info_.P[index-25] = atof(data.c_str());
+      if(index == 37) omni2_info_.binning_x = atof(data.c_str());
+      if(index == 38){
+          omni2_info_.binning_y = atof(data.c_str());
+          break;
+      }
+      index++;
+  }
+  in.close();
+
+  in.open((data_folder_path_+"/omni/cam3_info.csv").c_str());
+  getline(in, line);
+  stringstream sep_omni3(line);
+  index = 0;
+  while (getline(sep_omni3, data, ',')) {
+      if(index == 0) omni3_info_.height = stod(data);
+      if(index == 1) omni3_info_.width = stod(data);
+      if(index >= 2 && index <= 6) omni3_info_.D.push_back(atof(data.c_str()));
+      if(index >= 7 && index <= 15) omni3_info_.K[index-7] = atof(data.c_str());
+      if(index >= 16 && index <= 24) omni3_info_.R[index-16] = atof(data.c_str());
+      if(index >= 25 && index <= 36) omni3_info_.P[index-25] = atof(data.c_str());
+      if(index == 37) omni3_info_.binning_x = atof(data.c_str());
+      if(index == 38){
+          omni3_info_.binning_y = atof(data.c_str());
+          break;
+      }
+      index++;
+  }
+  in.close();
+
+  in.open((data_folder_path_+"/omni/cam4_info.csv").c_str());
+  getline(in, line);
+  stringstream sep_omni4(line);
+  index = 0;
+  while (getline(sep_omni4, data, ',')) {
+      if(index == 0) omni4_info_.height = stod(data);
+      if(index == 1) omni4_info_.width = stod(data);
+      if(index >= 2 && index <= 6) omni4_info_.D.push_back(atof(data.c_str()));
+      if(index >= 7 && index <= 15) omni4_info_.K[index-7] = atof(data.c_str());
+      if(index >= 16 && index <= 24) omni4_info_.R[index-16] = atof(data.c_str());
+      if(index >= 25 && index <= 36) omni4_info_.P[index-25] = atof(data.c_str());
+      if(index == 37) omni4_info_.binning_x = atof(data.c_str());
+      if(index == 38){
+          omni4_info_.binning_y = atof(data.c_str());
+          break;
+      }
+      index++;
+  }
+  in.close();
 
   data_stamp_thread_.thread_ = std::thread(&ROSThread::DataStampThread,this);
   altimter_thread_.thread_ = std::thread(&ROSThread::AltimeterThread,this);
@@ -504,23 +649,25 @@ void ROSThread::VelodyneLeftThread()
         cloud.clear();
         sensor_msgs::PointCloud2 publish_cloud;
         string current_file_name = data_folder_path_ + "/sensor_data/VLP_left" +"/"+ to_string(data) + ".bin";
+        if(find(velodyne_left_file_list_.begin(),velodyne_left_file_list_.end(),to_string(data)+".bin") != velodyne_left_file_list_.end()){
+            ifstream file;
+            file.open(current_file_name, ios::in|ios::binary);
+            while(!file.eof()){
+                pcl::PointXYZI point;
+                file.read(reinterpret_cast<char *>(&point.x), sizeof(float));
+                file.read(reinterpret_cast<char *>(&point.y), sizeof(float));
+                file.read(reinterpret_cast<char *>(&point.z), sizeof(float));
+                file.read(reinterpret_cast<char *>(&point.intensity), sizeof(float));
+                cloud.points.push_back (point);
+            }
+            file.close();
 
-        ifstream file;
-        file.open(current_file_name, ios::in|ios::binary);
-        while(!file.eof()){
-            pcl::PointXYZI point;
-            file.read(reinterpret_cast<char *>(&point.x), sizeof(float));
-            file.read(reinterpret_cast<char *>(&point.y), sizeof(float));
-            file.read(reinterpret_cast<char *>(&point.z), sizeof(float));
-            file.read(reinterpret_cast<char *>(&point.intensity), sizeof(float));
-            cloud.points.push_back (point);
+            pcl::toROSMsg(cloud, publish_cloud);
+            publish_cloud.header.stamp.fromNSec(data);
+            publish_cloud.header.frame_id = "left_velodyne";
+            velodyne_left_pub_.publish(publish_cloud);
         }
-        file.close();
 
-        pcl::toROSMsg(cloud, publish_cloud);
-        publish_cloud.header.stamp.fromNSec(data);
-        publish_cloud.header.frame_id = "left_velodyne";
-        velodyne_left_pub_.publish(publish_cloud);
       }
 
       //load next data
@@ -528,7 +675,7 @@ void ROSThread::VelodyneLeftThread()
       cloud.clear();
       sensor_msgs::PointCloud2 publish_cloud;
       int current_file_index = find(velodyne_left_file_list_.begin(),velodyne_left_file_list_.end(),to_string(data)+".bin") - velodyne_left_file_list_.begin();
-      if(current_file_index < velodyne_left_file_list_.size()-1){
+      if(find(velodyne_left_file_list_.begin(),velodyne_left_file_list_.end(),velodyne_left_file_list_[current_file_index+1]) != velodyne_left_file_list_.end()){
           string next_file_name = data_folder_path_ + "/sensor_data/VLP_left" +"/"+ velodyne_left_file_list_[current_file_index+1];
 
           ifstream file;
@@ -575,23 +722,25 @@ void ROSThread::VelodyneRightThread()
         cloud.clear();
         sensor_msgs::PointCloud2 publish_cloud;
         string current_file_name = data_folder_path_ + "/sensor_data/VLP_right" +"/"+ to_string(data) + ".bin";
+        if(find(velodyne_right_file_list_.begin(),velodyne_right_file_list_.end(),to_string(data)+".bin") != velodyne_right_file_list_.end()){
+            ifstream file;
+            file.open(current_file_name, ios::in|ios::binary);
+            while(!file.eof()){
+                pcl::PointXYZI point;
+                file.read(reinterpret_cast<char *>(&point.x), sizeof(float));
+                file.read(reinterpret_cast<char *>(&point.y), sizeof(float));
+                file.read(reinterpret_cast<char *>(&point.z), sizeof(float));
+                file.read(reinterpret_cast<char *>(&point.intensity), sizeof(float));
+                cloud.points.push_back (point);
+            }
+            file.close();
 
-        ifstream file;
-        file.open(current_file_name, ios::in|ios::binary);
-        while(!file.eof()){
-            pcl::PointXYZI point;
-            file.read(reinterpret_cast<char *>(&point.x), sizeof(float));
-            file.read(reinterpret_cast<char *>(&point.y), sizeof(float));
-            file.read(reinterpret_cast<char *>(&point.z), sizeof(float));
-            file.read(reinterpret_cast<char *>(&point.intensity), sizeof(float));
-            cloud.points.push_back (point);
+            pcl::toROSMsg(cloud, publish_cloud);
+            publish_cloud.header.stamp.fromNSec(data);
+            publish_cloud.header.frame_id = "right_velodyne";
+            velodyne_right_pub_.publish(publish_cloud);
         }
-        file.close();
 
-        pcl::toROSMsg(cloud, publish_cloud);
-        publish_cloud.header.stamp.fromNSec(data);
-        publish_cloud.header.frame_id = "right_velodyne";
-        velodyne_right_pub_.publish(publish_cloud);
       }
 
       //load next data
@@ -599,7 +748,7 @@ void ROSThread::VelodyneRightThread()
       cloud.clear();
       sensor_msgs::PointCloud2 publish_cloud;
       int current_file_index = find(velodyne_right_file_list_.begin(),velodyne_right_file_list_.end(),to_string(data)+".bin") - velodyne_right_file_list_.begin();
-      if(current_file_index < velodyne_right_file_list_.size()-1){
+      if(find(velodyne_right_file_list_.begin(),velodyne_right_file_list_.end(),velodyne_right_file_list_[current_file_index+1]) != velodyne_right_file_list_.end()){
           string next_file_name = data_folder_path_ + "/sensor_data/VLP_right" +"/"+ velodyne_right_file_list_[current_file_index+1];
 
           ifstream file;
@@ -646,39 +795,41 @@ void ROSThread::SickBackThread()
         irp_sen_msgs::LaserScanArray publish_data;
         sensor_msgs::LaserScan scan_data;
         string current_file_name = data_folder_path_ + "/sensor_data/SICK_back" +"/"+ to_string(data)+".bin";
+        if(find(sick_back_file_list_.begin(),sick_back_file_list_.end(),to_string(data)+".bin") != sick_back_file_list_.end()){
+            ifstream file;
+            file.open(current_file_name, ios::in|ios::binary);
+            while(!file.eof()){
+                float range;
+                float intensity;
+                file.read(reinterpret_cast<char *>(&range), sizeof(float));
+                file.read(reinterpret_cast<char *>(&intensity), sizeof(float));
+                scan_data.ranges.push_back(range);
+                scan_data.intensities.push_back((intensity));
+            }
+            file.close();
+            scan_data.header.stamp.fromNSec(data);
+            scan_data.header.frame_id = "back_sick";
+            scan_data.angle_min = -1.65806281567;
+            scan_data.angle_max = -1.65806281567;
+            scan_data.angle_increment = 0.0116355288774;
+            scan_data.time_increment = 0.0;
+            scan_data.range_min = 0.0;
+            scan_data.range_max = 81.0;
+            publish_data.LaserScans.push_back(scan_data);
+            publish_data.size = publish_data.LaserScans.size();
 
-        ifstream file;
-        file.open(current_file_name, ios::in|ios::binary);
-        while(!file.eof()){
-            float range;
-            float intensity;
-            file.read(reinterpret_cast<char *>(&range), sizeof(float));
-            file.read(reinterpret_cast<char *>(&intensity), sizeof(float));
-            scan_data.ranges.push_back(range);
-            scan_data.intensities.push_back((intensity));
+            publish_data.header.stamp.fromNSec(data);
+            publish_data.header.frame_id = "back_sick";
+            sick_back_pub_.publish(publish_data);
         }
-        file.close();
-        scan_data.header.stamp.fromNSec(data);
-        scan_data.header.frame_id = "back_sick";
-        scan_data.angle_min = -1.65806281567;
-        scan_data.angle_max = -1.65806281567;
-        scan_data.angle_increment = 0.0116355288774;
-        scan_data.time_increment = 0.0;
-        scan_data.range_min = 0.0;
-        scan_data.range_max = 81.0;
-        publish_data.LaserScans.push_back(scan_data);
-        publish_data.size = publish_data.LaserScans.size();
 
-        publish_data.header.stamp.fromNSec(data);
-        publish_data.header.frame_id = "back_sick";
-        sick_back_pub_.publish(publish_data);
       }
 
       //load next data
       irp_sen_msgs::LaserScanArray publish_data;
       sensor_msgs::LaserScan scan_data;
       int current_file_index = find(sick_back_file_list_.begin(),sick_back_file_list_.end(),to_string(data)+".bin") - sick_back_file_list_.begin();
-      if(current_file_index < sick_back_file_list_.size()-1){
+      if(find(sick_back_file_list_.begin(),sick_back_file_list_.end(),sick_back_file_list_[current_file_index+1]) != sick_back_file_list_.end()){
           string next_file_name = data_folder_path_ + "/sensor_data/SICK_back" +"/"+ sick_back_file_list_[current_file_index+1];
 
           ifstream file;
@@ -735,39 +886,41 @@ void ROSThread::SickMiddleThread()
         irp_sen_msgs::LaserScanArray publish_data;
         sensor_msgs::LaserScan scan_data;
         string current_file_name = data_folder_path_ + "/sensor_data/SICK_middle" +"/"+ to_string(data)+".bin";
+        if(find(sick_middle_file_list_.begin(),sick_middle_file_list_.end(),to_string(data)+".bin") != sick_middle_file_list_.end()){
+            ifstream file;
+            file.open(current_file_name, ios::in|ios::binary);
+            while(!file.eof()){
+                float range;
+                float intensity;
+                file.read(reinterpret_cast <char *>(&range), sizeof(range));
+                file.read(reinterpret_cast <char *>(&intensity), sizeof(intensity));
+                scan_data.ranges.push_back(range);
+                scan_data.intensities.push_back((intensity));
+            }
+            file.close();
+            scan_data.header.stamp.fromNSec(data);
+            scan_data.header.frame_id = "middle_sick";
+            scan_data.angle_min = -1.65806281567;
+            scan_data.angle_max = -1.65806281567;
+            scan_data.angle_increment = 0.0116355288774;
+            scan_data.time_increment = 0.0;
+            scan_data.range_min = 0.0;
+            scan_data.range_max = 81.0;
+            publish_data.LaserScans.push_back(scan_data);
+            publish_data.size = publish_data.LaserScans.size();
 
-        ifstream file;
-        file.open(current_file_name, ios::in|ios::binary);
-        while(!file.eof()){
-            float range;
-            float intensity;
-            file.read(reinterpret_cast <char *>(&range), sizeof(range));
-            file.read(reinterpret_cast <char *>(&intensity), sizeof(intensity));
-            scan_data.ranges.push_back(range);
-            scan_data.intensities.push_back((intensity));
+            publish_data.header.stamp.fromNSec(data);
+            publish_data.header.frame_id = "middle_sick";
+            sick_middle_pub_.publish(publish_data);
         }
-        file.close();
-        scan_data.header.stamp.fromNSec(data);
-        scan_data.header.frame_id = "middle_sick";
-        scan_data.angle_min = -1.65806281567;
-        scan_data.angle_max = -1.65806281567;
-        scan_data.angle_increment = 0.0116355288774;
-        scan_data.time_increment = 0.0;
-        scan_data.range_min = 0.0;
-        scan_data.range_max = 81.0;
-        publish_data.LaserScans.push_back(scan_data);
-        publish_data.size = publish_data.LaserScans.size();
 
-        publish_data.header.stamp.fromNSec(data);
-        publish_data.header.frame_id = "middle_sick";
-        sick_middle_pub_.publish(publish_data);
       }
 
       //load next data
       irp_sen_msgs::LaserScanArray publish_data;
       sensor_msgs::LaserScan scan_data;
       int current_file_index = find(sick_middle_file_list_.begin(),sick_middle_file_list_.end(),to_string(data)+".bin") - sick_middle_file_list_.begin();
-      if(current_file_index < sick_middle_file_list_.size()-1){
+      if(find(sick_middle_file_list_.begin(),sick_middle_file_list_.end(),sick_middle_file_list_[current_file_index+1]) != sick_middle_file_list_.end()){
           string next_file_name = data_folder_path_ + "/sensor_data/SICK_middle" +"/"+ sick_middle_file_list_[current_file_index+1];
 
           ifstream file;
@@ -848,28 +1001,32 @@ void ROSThread::StereoThread()
         current_left_image = imread(current_stereo_left_name, CV_LOAD_IMAGE_COLOR);
         current_right_image = imread(current_stereo_right_name, CV_LOAD_IMAGE_COLOR);
 
-        cv_bridge::CvImage left_out_msg;
-        left_out_msg.header.stamp.fromNSec(data);
-        left_out_msg.header.frame_id = "stereo_left";
-        left_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
-        left_out_msg.image    = current_left_image;
+        if(!current_left_image.empty() && !current_right_image.empty()){
 
-        cv_bridge::CvImage right_out_msg;
-        right_out_msg.header.stamp.fromNSec(data);
-        right_out_msg.header.frame_id = "stereo_right";
-        right_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
-        right_out_msg.image    = current_right_image;
+            cv_bridge::CvImage left_out_msg;
+            left_out_msg.header.stamp.fromNSec(data);
+            left_out_msg.header.frame_id = "stereo_left";
+            left_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+            left_out_msg.image    = current_left_image;
 
-        stereo_left_info_.header.stamp.fromNSec(data);
-        stereo_left_info_.header.frame_id = "/stereo/left";
-        stereo_right_info_.header.stamp.fromNSec(data);
-        stereo_right_info_.header.frame_id = "/stereo/right";
+            cv_bridge::CvImage right_out_msg;
+            right_out_msg.header.stamp.fromNSec(data);
+            right_out_msg.header.frame_id = "stereo_right";
+            right_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+            right_out_msg.image    = current_right_image;
 
-        stereo_left_pub_.publish(left_out_msg.toImageMsg());
-        stereo_right_pub_.publish(right_out_msg.toImageMsg());
+            stereo_left_info_.header.stamp.fromNSec(data);
+            stereo_left_info_.header.frame_id = "/stereo/left";
+            stereo_right_info_.header.stamp.fromNSec(data);
+            stereo_right_info_.header.frame_id = "/stereo/right";
 
-        stereo_left_info_pub_.publish(stereo_left_info_);
-        stereo_right_info_pub_.publish(stereo_right_info_);
+            stereo_left_pub_.publish(left_out_msg.toImageMsg());
+            stereo_right_pub_.publish(right_out_msg.toImageMsg());
+
+            stereo_left_info_pub_.publish(stereo_left_info_);
+            stereo_right_info_pub_.publish(stereo_right_info_);
+        }
+
 
       }
 
@@ -883,8 +1040,11 @@ void ROSThread::StereoThread()
           cv::Mat next_right_image;
           next_left_image = imread(next_stereo_left_name, CV_LOAD_IMAGE_COLOR);
           next_right_image = imread(next_stereo_right_name, CV_LOAD_IMAGE_COLOR);
-          stereo_left_next_img_ = make_pair(stereo_file_list_[current_img_index+1], next_left_image);
-          stereo_right_next_img_ = make_pair(stereo_file_list_[current_img_index+1], next_right_image);
+          if(!next_left_image.empty() && !next_right_image.empty()){
+              stereo_left_next_img_ = make_pair(stereo_file_list_[current_img_index+1], next_left_image);
+              stereo_right_next_img_ = make_pair(stereo_file_list_[current_img_index+1], next_right_image);
+          }
+
       }
     }
     if(stereo_thread_.active_ == false) return;
@@ -973,64 +1133,68 @@ void ROSThread::OmniThread()
         omni2_image = imread(current_omni2_name, CV_LOAD_IMAGE_COLOR);
         omni3_image = imread(current_omni3_name, CV_LOAD_IMAGE_COLOR);
         omni4_image = imread(current_omni4_name, CV_LOAD_IMAGE_COLOR);
-        cv::cvtColor(omni0_image, omni0_image, cv::COLOR_RGB2BGR);
-        cv::cvtColor(omni1_image, omni1_image, cv::COLOR_RGB2BGR);
-        cv::cvtColor(omni2_image, omni2_image, cv::COLOR_RGB2BGR);
-        cv::cvtColor(omni3_image, omni3_image, cv::COLOR_RGB2BGR);
-        cv::cvtColor(omni4_image, omni4_image, cv::COLOR_RGB2BGR);
+        if(!omni0_image.empty() && !omni1_image.empty() && !omni2_image.empty() && !omni3_image.empty() && !omni4_image.empty()){
 
-        cv_bridge::CvImage onmi0_out_msg;
-        onmi0_out_msg.header.stamp.fromNSec(data);
-        onmi0_out_msg.header.frame_id = "omni0";
-        onmi0_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
-        onmi0_out_msg.image    = omni0_image;
+            cv::cvtColor(omni0_image, omni0_image, cv::COLOR_RGB2BGR);
+            cv::cvtColor(omni1_image, omni1_image, cv::COLOR_RGB2BGR);
+            cv::cvtColor(omni2_image, omni2_image, cv::COLOR_RGB2BGR);
+            cv::cvtColor(omni3_image, omni3_image, cv::COLOR_RGB2BGR);
+            cv::cvtColor(omni4_image, omni4_image, cv::COLOR_RGB2BGR);
 
-        cv_bridge::CvImage onmi1_out_msg;
-        onmi1_out_msg.header.stamp.fromNSec(data);
-        onmi1_out_msg.header.frame_id = "omni1";
-        onmi1_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
-        onmi1_out_msg.image    = omni1_image;
+            cv_bridge::CvImage onmi0_out_msg;
+            onmi0_out_msg.header.stamp.fromNSec(data);
+            onmi0_out_msg.header.frame_id = "omni0";
+            onmi0_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+            onmi0_out_msg.image    = omni0_image;
 
-        cv_bridge::CvImage onmi2_out_msg;
-        onmi2_out_msg.header.stamp.fromNSec(data);
-        onmi2_out_msg.header.frame_id = "omni2";
-        onmi2_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
-        onmi2_out_msg.image    = omni2_image;
+            cv_bridge::CvImage onmi1_out_msg;
+            onmi1_out_msg.header.stamp.fromNSec(data);
+            onmi1_out_msg.header.frame_id = "omni1";
+            onmi1_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+            onmi1_out_msg.image    = omni1_image;
 
-        cv_bridge::CvImage onmi3_out_msg;
-        onmi3_out_msg.header.stamp.fromNSec(data);
-        onmi3_out_msg.header.frame_id = "omni3";
-        onmi3_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
-        onmi3_out_msg.image    = omni3_image;
+            cv_bridge::CvImage onmi2_out_msg;
+            onmi2_out_msg.header.stamp.fromNSec(data);
+            onmi2_out_msg.header.frame_id = "omni2";
+            onmi2_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+            onmi2_out_msg.image    = omni2_image;
 
-        cv_bridge::CvImage onmi4_out_msg;
-        onmi4_out_msg.header.stamp.fromNSec(data);
-        onmi4_out_msg.header.frame_id = "omni4";
-        onmi4_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
-        onmi4_out_msg.image    = omni4_image;
+            cv_bridge::CvImage onmi3_out_msg;
+            onmi3_out_msg.header.stamp.fromNSec(data);
+            onmi3_out_msg.header.frame_id = "omni3";
+            onmi3_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+            onmi3_out_msg.image    = omni3_image;
 
-        omni0_info_.header.stamp.fromNSec(data);
-        omni0_info_.header.frame_id = "occam_info";
-        omni1_info_.header.stamp.fromNSec(data);
-        omni1_info_.header.frame_id = "occam_info";
-        omni2_info_.header.stamp.fromNSec(data);
-        omni2_info_.header.frame_id = "occam_info";
-        omni3_info_.header.stamp.fromNSec(data);
-        omni3_info_.header.frame_id = "occam_info";
-        omni4_info_.header.stamp.fromNSec(data);
-        omni4_info_.header.frame_id = "occam_info";
+            cv_bridge::CvImage onmi4_out_msg;
+            onmi4_out_msg.header.stamp.fromNSec(data);
+            onmi4_out_msg.header.frame_id = "omni4";
+            onmi4_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+            onmi4_out_msg.image    = omni4_image;
 
-        omni0_pub_.publish(onmi0_out_msg.toImageMsg());
-        omni1_pub_.publish(onmi1_out_msg.toImageMsg());
-        omni2_pub_.publish(onmi2_out_msg.toImageMsg());
-        omni3_pub_.publish(onmi3_out_msg.toImageMsg());
-        omni4_pub_.publish(onmi4_out_msg.toImageMsg());
+            omni0_info_.header.stamp.fromNSec(data);
+            omni0_info_.header.frame_id = "occam_info";
+            omni1_info_.header.stamp.fromNSec(data);
+            omni1_info_.header.frame_id = "occam_info";
+            omni2_info_.header.stamp.fromNSec(data);
+            omni2_info_.header.frame_id = "occam_info";
+            omni3_info_.header.stamp.fromNSec(data);
+            omni3_info_.header.frame_id = "occam_info";
+            omni4_info_.header.stamp.fromNSec(data);
+            omni4_info_.header.frame_id = "occam_info";
 
-        omni0_info_pub_.publish(omni0_info_);
-        omni1_info_pub_.publish(omni1_info_);
-        omni2_info_pub_.publish(omni2_info_);
-        omni3_info_pub_.publish(omni3_info_);
-        omni4_info_pub_.publish(omni4_info_);
+            omni0_pub_.publish(onmi0_out_msg.toImageMsg());
+            omni1_pub_.publish(onmi1_out_msg.toImageMsg());
+            omni2_pub_.publish(onmi2_out_msg.toImageMsg());
+            omni3_pub_.publish(onmi3_out_msg.toImageMsg());
+            omni4_pub_.publish(onmi4_out_msg.toImageMsg());
+
+            omni0_info_pub_.publish(omni0_info_);
+            omni1_info_pub_.publish(omni1_info_);
+            omni2_info_pub_.publish(omni2_info_);
+            omni3_info_pub_.publish(omni3_info_);
+            omni4_info_pub_.publish(omni4_info_);
+        }
+
       }
 
       //load next image
@@ -1051,17 +1215,19 @@ void ROSThread::OmniThread()
           omni2_image = imread(next_omni2_name, CV_LOAD_IMAGE_COLOR);
           omni3_image = imread(next_omni3_name, CV_LOAD_IMAGE_COLOR);
           omni4_image = imread(next_omni4_name, CV_LOAD_IMAGE_COLOR);
-          cv::cvtColor(omni0_image, omni0_image, cv::COLOR_RGB2BGR);
-          cv::cvtColor(omni1_image, omni1_image, cv::COLOR_RGB2BGR);
-          cv::cvtColor(omni2_image, omni2_image, cv::COLOR_RGB2BGR);
-          cv::cvtColor(omni3_image, omni3_image, cv::COLOR_RGB2BGR);
-          cv::cvtColor(omni4_image, omni4_image, cv::COLOR_RGB2BGR);
+          if(!omni0_image.empty() && !omni1_image.empty() && !omni2_image.empty() && !omni3_image.empty() && !omni4_image.empty()){
+              cv::cvtColor(omni0_image, omni0_image, cv::COLOR_RGB2BGR);
+              cv::cvtColor(omni1_image, omni1_image, cv::COLOR_RGB2BGR);
+              cv::cvtColor(omni2_image, omni2_image, cv::COLOR_RGB2BGR);
+              cv::cvtColor(omni3_image, omni3_image, cv::COLOR_RGB2BGR);
+              cv::cvtColor(omni4_image, omni4_image, cv::COLOR_RGB2BGR);
 
-          omni0_next_img_ = make_pair(omni_file_list_[current_img_index+1], omni0_image);
-          omni1_next_img_ = make_pair(omni_file_list_[current_img_index+1], omni1_image);
-          omni2_next_img_ = make_pair(omni_file_list_[current_img_index+1], omni2_image);
-          omni3_next_img_ = make_pair(omni_file_list_[current_img_index+1], omni3_image);
-          omni4_next_img_ = make_pair(omni_file_list_[current_img_index+1], omni4_image);
+              omni0_next_img_ = make_pair(omni_file_list_[current_img_index+1], omni0_image);
+              omni1_next_img_ = make_pair(omni_file_list_[current_img_index+1], omni1_image);
+              omni2_next_img_ = make_pair(omni_file_list_[current_img_index+1], omni2_image);
+              omni3_next_img_ = make_pair(omni_file_list_[current_img_index+1], omni3_image);
+              omni4_next_img_ = make_pair(omni_file_list_[current_img_index+1], omni4_image);
+          }
       }
     }
     if(omni_thread_.active_ == false) return;
