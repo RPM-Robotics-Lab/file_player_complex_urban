@@ -96,6 +96,15 @@ void ROSThread::ros_initialize(ros::NodeHandle &n)
   omni2_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image2", 10);
   omni3_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image3", 10);
   omni4_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image4", 10);
+
+  stereo_left_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/stereo/left/camera_info", 10);
+  stereo_right_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/stereo/right/camera_info", 10);
+  omni0_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image0/camera_info", 10);
+  omni1_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image1/camera_info", 10);
+  omni2_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image2/camera_info", 10);
+  omni3_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image3/camera_info", 10);
+  omni4_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image4/camera_info", 10);
+
 }
 
 void ROSThread::run()
@@ -818,8 +827,16 @@ void ROSThread::StereoThread()
         right_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
         right_out_msg.image    = stereo_right_next_img_.second;
 
+        stereo_left_info_.header.stamp.fromNSec(data);
+        stereo_left_info_.header.frame_id = "/stereo/left";
+        stereo_right_info_.header.stamp.fromNSec(data);
+        stereo_right_info_.header.frame_id = "/stereo/right";
+
         stereo_left_pub_.publish(left_out_msg.toImageMsg());
         stereo_right_pub_.publish(right_out_msg.toImageMsg());
+
+        stereo_left_info_pub_.publish(stereo_left_info_);
+        stereo_right_info_pub_.publish(stereo_right_info_);
 
       }else{
         cout << "Re-load stereo image from image path" << endl;
@@ -843,13 +860,22 @@ void ROSThread::StereoThread()
         right_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
         right_out_msg.image    = current_right_image;
 
+        stereo_left_info_.header.stamp.fromNSec(data);
+        stereo_left_info_.header.frame_id = "/stereo/left";
+        stereo_right_info_.header.stamp.fromNSec(data);
+        stereo_right_info_.header.frame_id = "/stereo/right";
+
         stereo_left_pub_.publish(left_out_msg.toImageMsg());
         stereo_right_pub_.publish(right_out_msg.toImageMsg());
+
+        stereo_left_info_pub_.publish(stereo_left_info_);
+        stereo_right_info_pub_.publish(stereo_right_info_);
+
       }
 
       //load next image
       int current_img_index = find(stereo_file_list_.begin(),stereo_file_list_.end(),to_string(data)+".jpeg") - stereo_file_list_.begin();
-      if(current_img_index < stereo_file_list_.size()-1){
+      if(current_img_index < stereo_file_list_.size()-2){
 
           string next_stereo_left_name = data_folder_path_ + "/image/stereo_left" +"/"+ stereo_file_list_[current_img_index+1];
           string next_stereo_right_name = data_folder_path_ + "/image/stereo_right" +"/"+ stereo_file_list_[current_img_index+1];
@@ -907,11 +933,28 @@ void ROSThread::OmniThread()
         onmi4_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
         onmi4_out_msg.image    = omni4_next_img_.second;
 
+        omni0_info_.header.stamp.fromNSec(data);
+        omni0_info_.header.frame_id = "occam_info";
+        omni1_info_.header.stamp.fromNSec(data);
+        omni1_info_.header.frame_id = "occam_info";
+        omni2_info_.header.stamp.fromNSec(data);
+        omni2_info_.header.frame_id = "occam_info";
+        omni3_info_.header.stamp.fromNSec(data);
+        omni3_info_.header.frame_id = "occam_info";
+        omni4_info_.header.stamp.fromNSec(data);
+        omni4_info_.header.frame_id = "occam_info";
+
         omni0_pub_.publish(onmi0_out_msg.toImageMsg());
         omni1_pub_.publish(onmi1_out_msg.toImageMsg());
         omni2_pub_.publish(onmi2_out_msg.toImageMsg());
         omni3_pub_.publish(onmi3_out_msg.toImageMsg());
         omni4_pub_.publish(onmi4_out_msg.toImageMsg());
+
+        omni0_info_pub_.publish(omni0_info_);
+        omni1_info_pub_.publish(omni1_info_);
+        omni2_info_pub_.publish(omni2_info_);
+        omni3_info_pub_.publish(omni3_info_);
+        omni4_info_pub_.publish(omni4_info_);
 
       }else{
         cout << "Re-load omni image from image path" << endl;
@@ -966,16 +1009,33 @@ void ROSThread::OmniThread()
         onmi4_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
         onmi4_out_msg.image    = omni4_image;
 
+        omni0_info_.header.stamp.fromNSec(data);
+        omni0_info_.header.frame_id = "occam_info";
+        omni1_info_.header.stamp.fromNSec(data);
+        omni1_info_.header.frame_id = "occam_info";
+        omni2_info_.header.stamp.fromNSec(data);
+        omni2_info_.header.frame_id = "occam_info";
+        omni3_info_.header.stamp.fromNSec(data);
+        omni3_info_.header.frame_id = "occam_info";
+        omni4_info_.header.stamp.fromNSec(data);
+        omni4_info_.header.frame_id = "occam_info";
+
         omni0_pub_.publish(onmi0_out_msg.toImageMsg());
         omni1_pub_.publish(onmi1_out_msg.toImageMsg());
         omni2_pub_.publish(onmi2_out_msg.toImageMsg());
         omni3_pub_.publish(onmi3_out_msg.toImageMsg());
         omni4_pub_.publish(onmi4_out_msg.toImageMsg());
+
+        omni0_info_pub_.publish(omni0_info_);
+        omni1_info_pub_.publish(omni1_info_);
+        omni2_info_pub_.publish(omni2_info_);
+        omni3_info_pub_.publish(omni3_info_);
+        omni4_info_pub_.publish(omni4_info_);
       }
 
       //load next image
       int current_img_index = find(omni_file_list_.begin(),omni_file_list_.end(),to_string(data)+".jpeg") - omni_file_list_.begin();
-      if(current_img_index < omni_file_list_.size()-1){
+      if(current_img_index < omni_file_list_.size()-2){
           string next_omni0_name = data_folder_path_ + "/omni/cam0" +"/"+ omni_file_list_[current_img_index+1];
           string next_omni1_name = data_folder_path_ + "/omni/cam1" +"/"+ omni_file_list_[current_img_index+1];
           string next_omni2_name = data_folder_path_ + "/omni/cam2" +"/"+ omni_file_list_[current_img_index+1];

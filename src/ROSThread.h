@@ -35,6 +35,7 @@
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <sensor_msgs/LaserScan.h>
+#include <sensor_msgs/CameraInfo.h>
 #include <irp_sen_msgs/vrs.h>
 #include <irp_sen_msgs/altimeter.h>
 #include <irp_sen_msgs/encoder.h>
@@ -119,6 +120,14 @@ private:
     ros::Publisher omni3_pub_;
     ros::Publisher omni4_pub_;
 
+    ros::Publisher stereo_left_info_pub_;
+    ros::Publisher stereo_right_info_pub_;
+    ros::Publisher omni0_info_pub_;
+    ros::Publisher omni1_info_pub_;
+    ros::Publisher omni2_info_pub_;
+    ros::Publisher omni3_info_pub_;
+    ros::Publisher omni4_info_pub_;
+
     map<int64_t, string>                    data_stamp_;
     map<int64_t, irp_sen_msgs::altimeter>   altimeter_data_;
     map<int64_t, irp_sen_msgs::encoder>     encoder_data_;
@@ -183,6 +192,14 @@ private:
     pair<string,cv::Mat> omni2_next_img_;
     pair<string,cv::Mat> omni3_next_img_;
     pair<string,cv::Mat> omni4_next_img_;
+
+    sensor_msgs::CameraInfo stereo_left_info_;
+    sensor_msgs::CameraInfo stereo_right_info_;
+    sensor_msgs::CameraInfo omni0_info_;
+    sensor_msgs::CameraInfo omni1_info_;
+    sensor_msgs::CameraInfo omni2_info_;
+    sensor_msgs::CameraInfo omni3_info_;
+    sensor_msgs::CameraInfo omni4_info_;
 
     int GetDirList(string dir, vector<string> &files);
 
