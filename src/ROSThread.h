@@ -34,6 +34,7 @@
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/NavSatFix.h>
+#include <sensor_msgs/LaserScan.h>
 #include <irp_sen_msgs/vrs.h>
 #include <irp_sen_msgs/altimeter.h>
 #include <irp_sen_msgs/encoder.h>

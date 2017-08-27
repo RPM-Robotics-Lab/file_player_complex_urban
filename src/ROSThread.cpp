@@ -71,7 +71,7 @@ void ROSThread::ros_initialize(ros::NodeHandle &n)
   vrs_pub_ = nh_.advertise<irp_sen_msgs::vrs>("/vrs_gps_data", 1000);
   imu_pub_ = nh_.advertise<irp_sen_msgs::imu>("/xsens_imu_data", 1000);
   velodyne_left_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("/ns2/velodyne_points", 1000);
-  velodyne_right_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("/ns2/velodyne_points", 1000);
+  velodyne_right_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("/ns1/velodyne_points", 1000);
   sick_back_pub_ = nh_.advertise<irp_sen_msgs::LaserScanArray>("/lms511_back/scan", 1000);
   sick_middle_pub_ = nh_.advertise<irp_sen_msgs::LaserScanArray>("/lms511_middle/scan", 1000);
 }
@@ -412,26 +412,60 @@ void ROSThread::VelodyneLeftThread()
 
     while(!velodyne_left_thread_.data_queue_.empty()){
       auto data = velodyne_left_thread_.pop();
-      //process
-      //publish data
 
+      //publish data
+      if(to_string(data) + ".bin" == velodyne_left_next_.first){
+        //publish
+        velodyne_left_next_.second.header.stamp.fromNSec(data);
+        velodyne_left_next_.second.header.frame_id = "left_velodyne";
+        velodyne_left_pub_.publish(velodyne_left_next_.second);
+
+      }else{
+        cout << "Re-load left velodyne from path" << endl;
+        //load current data
+        pcl::PointCloud<pcl::PointXYZI> cloud;
+        cloud.clear();
+        sensor_msgs::PointCloud2 publish_cloud;
+        string current_file_name = data_folder_path_ + "/sensor_data/VLP_left" +"/"+ to_string(data) + ".bin";
+
+        ifstream file;
+        file.open(current_file_name, ios::in|ios::binary);
+        while(!file.eof()){
+            pcl::PointXYZI point;
+            file.read(reinterpret_cast<char *>(&point.x), sizeof(float));
+            file.read(reinterpret_cast<char *>(&point.y), sizeof(float));
+            file.read(reinterpret_cast<char *>(&point.z), sizeof(float));
+            file.read(reinterpret_cast<char *>(&point.intensity), sizeof(float));
+            cloud.points.push_back (point);
+        }
+        file.close();
+
+        pcl::toROSMsg(cloud, publish_cloud);
+        publish_cloud.header.stamp.fromNSec(data);
+        publish_cloud.header.frame_id = "left_velodyne";
+        velodyne_left_pub_.publish(publish_cloud);
+      }
 
       //load next data
-      sensor_msgs::PointCloud2 tmp_data;
+      pcl::PointCloud<pcl::PointXYZI> cloud;
+      cloud.clear();
+      sensor_msgs::PointCloud2 publish_cloud;
       int current_file_index = find(velodyne_left_file_list_.begin(),velodyne_left_file_list_.end(),to_string(data)+".bin") - velodyne_left_file_list_.begin();
       string next_file_name = data_folder_path_ + "/sensor_data/VLP_left" +"/"+ velodyne_left_file_list_[current_file_index+1];
-      streampos size;
-      char *memblock;
+
       ifstream file;
       file.open(next_file_name, ios::in|ios::binary);
-      size = file.tellg();
-      memblock = new char [size];
-      file.seekg(0, ios::beg);
-      file.read(memblock, size);
+      while(!file.eof()){
+          pcl::PointXYZI point;
+          file.read(reinterpret_cast<char *>(&point.x), sizeof(float));
+          file.read(reinterpret_cast<char *>(&point.y), sizeof(float));
+          file.read(reinterpret_cast<char *>(&point.z), sizeof(float));
+          file.read(reinterpret_cast<char *>(&point.intensity), sizeof(float));
+          cloud.points.push_back (point);
+      }
       file.close();
-
-
-      delete memblock;
+      pcl::toROSMsg(cloud, publish_cloud);
+      velodyne_left_next_ = make_pair(velodyne_left_file_list_[current_file_index+1], publish_cloud);
     }
   }
 }
@@ -447,6 +481,59 @@ void ROSThread::VelodyneRightThread()
       auto data = velodyne_right_thread_.pop();
       //process
 
+      //publish data
+      if(to_string(data) + ".bin" == velodyne_right_next_.first){
+        //publish
+        velodyne_right_next_.second.header.stamp.fromNSec(data);
+        velodyne_right_next_.second.header.frame_id = "right_velodyne";
+        velodyne_right_pub_.publish(velodyne_right_next_.second);
+
+      }else{
+        cout << "Re-load right velodyne from path" << endl;
+        //load current data
+        pcl::PointCloud<pcl::PointXYZI> cloud;
+        cloud.clear();
+        sensor_msgs::PointCloud2 publish_cloud;
+        string current_file_name = data_folder_path_ + "/sensor_data/VLP_right" +"/"+ to_string(data) + ".bin";
+
+        ifstream file;
+        file.open(current_file_name, ios::in|ios::binary);
+        while(!file.eof()){
+            pcl::PointXYZI point;
+            file.read(reinterpret_cast<char *>(&point.x), sizeof(float));
+            file.read(reinterpret_cast<char *>(&point.y), sizeof(float));
+            file.read(reinterpret_cast<char *>(&point.z), sizeof(float));
+            file.read(reinterpret_cast<char *>(&point.intensity), sizeof(float));
+            cloud.points.push_back (point);
+        }
+        file.close();
+
+        pcl::toROSMsg(cloud, publish_cloud);
+        publish_cloud.header.stamp.fromNSec(data);
+        publish_cloud.header.frame_id = "right_velodyne";
+        velodyne_right_pub_.publish(publish_cloud);
+      }
+
+      //load next data
+      pcl::PointCloud<pcl::PointXYZI> cloud;
+      cloud.clear();
+      sensor_msgs::PointCloud2 publish_cloud;
+      int current_file_index = find(velodyne_right_file_list_.begin(),velodyne_right_file_list_.end(),to_string(data)+".bin") - velodyne_right_file_list_.begin();
+      string next_file_name = data_folder_path_ + "/sensor_data/VLP_right" +"/"+ velodyne_right_file_list_[current_file_index+1];
+
+      ifstream file;
+      file.open(next_file_name, ios::in|ios::binary);
+      while(!file.eof()){
+          pcl::PointXYZI point;
+          file.read(reinterpret_cast<char *>(&point.x), sizeof(float));
+          file.read(reinterpret_cast<char *>(&point.y), sizeof(float));
+          file.read(reinterpret_cast<char *>(&point.z), sizeof(float));
+          file.read(reinterpret_cast<char *>(&point.intensity), sizeof(float));
+          cloud.points.push_back (point);
+      }
+      file.close();
+      pcl::toROSMsg(cloud, publish_cloud);
+      velodyne_right_next_ = make_pair(velodyne_right_file_list_[current_file_index+1], publish_cloud);
     }
   }
 }
@@ -462,6 +549,76 @@ void ROSThread::SickBackThread()
       auto data = sick_back_thread_.pop();
       //process
 
+      //publish data
+      if(to_string(data) + ".bin" == sick_back_next_.first){
+        //publish
+        sick_back_next_.second.header.stamp.fromNSec(data);
+        sick_back_next_.second.header.frame_id = "back_sick";
+        sick_back_pub_.publish(sick_back_next_.second);
+
+      }else{
+        cout << "Re-load back sick from path" << endl;
+        //load current data
+        irp_sen_msgs::LaserScanArray publish_data;
+        sensor_msgs::LaserScan scan_data;
+        string current_file_name = data_folder_path_ + "/sensor_data/SICK_back" +"/"+ to_string(data)+".bin";
+
+        ifstream file;
+        file.open(current_file_name, ios::in|ios::binary);
+        while(!file.eof()){
+            float range;
+            float intensity;
+            file.read(reinterpret_cast<char *>(&range), sizeof(float));
+            file.read(reinterpret_cast<char *>(&intensity), sizeof(float));
+            scan_data.ranges.push_back(range);
+            scan_data.intensities.push_back((intensity));
+        }
+        file.close();
+        scan_data.header.stamp.fromNSec(data);
+        scan_data.header.frame_id = "back_sick";
+        scan_data.angle_min = -1.65806281567;
+        scan_data.angle_max = -1.65806281567;
+        scan_data.angle_increment = 0.0116355288774;
+        scan_data.time_increment = 0.0;
+        scan_data.range_min = 0.0;
+        scan_data.range_max = 81.0;
+        publish_data.LaserScans.push_back(scan_data);
+        publish_data.size = publish_data.LaserScans.size();
+
+        publish_data.header.stamp.fromNSec(data);
+        publish_data.header.frame_id = "back_sick";
+        sick_back_pub_.publish(publish_data);
+      }
+
+      //load next data
+      irp_sen_msgs::LaserScanArray publish_data;
+      sensor_msgs::LaserScan scan_data;
+      int current_file_index = find(sick_back_file_list_.begin(),sick_back_file_list_.end(),to_string(data)+".bin") - sick_back_file_list_.begin();
+      string next_file_name = data_folder_path_ + "/sensor_data/SICK_back" +"/"+ sick_back_file_list_[current_file_index+1];
+
+      ifstream file;
+      file.open(next_file_name, ios::in|ios::binary);
+      while(!file.eof()){
+          float range;
+          float intensity;
+          file.read(reinterpret_cast <char *>(&range), sizeof(float));
+          file.read(reinterpret_cast <char *>(&intensity), sizeof(float));
+          scan_data.ranges.push_back(range);
+          scan_data.intensities.push_back(intensity);
+      }
+      file.close();
+      char* pEnd;
+      scan_data.header.stamp.fromNSec(strtoll(sick_back_file_list_[current_file_index+1].substr(0,19).c_str(),&pEnd,10));
+      scan_data.header.frame_id = "back_sick";
+      scan_data.angle_min = -1.65806281567;
+      scan_data.angle_max = -1.65806281567;
+      scan_data.angle_increment = 0.0116355288774;
+      scan_data.time_increment = 0.0;
+      scan_data.range_min = 0.0;
+      scan_data.range_max = 81.0;
+      publish_data.LaserScans.push_back(scan_data);
+      publish_data.size = publish_data.LaserScans.size();
+      sick_back_next_ = make_pair(sick_back_file_list_[current_file_index+1], publish_data);
     }
   }
 }
@@ -476,7 +633,76 @@ void ROSThread::SickMiddleThread()
     while(!sick_middle_thread_.data_queue_.empty()){
       auto data = sick_middle_thread_.pop();
       //process
+      //publish data
+      if(to_string(data) + ".bin" == sick_middle_next_.first){
+        //publish
+        sick_middle_next_.second.header.stamp.fromNSec(data);
+        sick_middle_next_.second.header.frame_id = "middle_sick";
+        sick_middle_pub_.publish(sick_middle_next_.second);
 
+      }else{
+        cout << "Re-load middle sick from path" << endl;
+        //load current data
+        irp_sen_msgs::LaserScanArray publish_data;
+        sensor_msgs::LaserScan scan_data;
+        string current_file_name = data_folder_path_ + "/sensor_data/SICK_middle" +"/"+ to_string(data)+".bin";
+
+        ifstream file;
+        file.open(current_file_name, ios::in|ios::binary);
+        while(!file.eof()){
+            float range;
+            float intensity;
+            file.read(reinterpret_cast <char *>(&range), sizeof(range));
+            file.read(reinterpret_cast <char *>(&intensity), sizeof(intensity));
+            scan_data.ranges.push_back(range);
+            scan_data.intensities.push_back((intensity));
+        }
+        file.close();
+        scan_data.header.stamp.fromNSec(data);
+        scan_data.header.frame_id = "middle_sick";
+        scan_data.angle_min = -1.65806281567;
+        scan_data.angle_max = -1.65806281567;
+        scan_data.angle_increment = 0.0116355288774;
+        scan_data.time_increment = 0.0;
+        scan_data.range_min = 0.0;
+        scan_data.range_max = 81.0;
+        publish_data.LaserScans.push_back(scan_data);
+        publish_data.size = publish_data.LaserScans.size();
+
+        publish_data.header.stamp.fromNSec(data);
+        publish_data.header.frame_id = "middle_sick";
+        sick_middle_pub_.publish(publish_data);
+      }
+
+      //load next data
+      irp_sen_msgs::LaserScanArray publish_data;
+      sensor_msgs::LaserScan scan_data;
+      int current_file_index = find(sick_middle_file_list_.begin(),sick_middle_file_list_.end(),to_string(data)+".bin") - sick_middle_file_list_.begin();
+      string next_file_name = data_folder_path_ + "/sensor_data/SICK_middle" +"/"+ sick_middle_file_list_[current_file_index+1];
+
+      ifstream file;
+      file.open(next_file_name, ios::in|ios::binary);
+      while(!file.eof()){
+          float range;
+          float intensity;
+          file.read(reinterpret_cast <char *>(&range), sizeof(range));
+          file.read(reinterpret_cast <char *>(&intensity), sizeof(intensity));
+          scan_data.ranges.push_back(range);
+          scan_data.intensities.push_back((intensity));
+      }
+      file.close();
+      char* pEnd;
+      scan_data.header.stamp.fromNSec(strtoll(sick_middle_file_list_[current_file_index+1].substr(0,19).c_str(),&pEnd,10));
+      scan_data.header.frame_id = "middle_sick";
+      scan_data.angle_min = -1.65806281567;
+      scan_data.angle_max = -1.65806281567;
+      scan_data.angle_increment = 0.0116355288774;
+      scan_data.time_increment = 0.0;
+      scan_data.range_min = 0.0;
+      scan_data.range_max = 81.0;
+      publish_data.LaserScans.push_back(scan_data);
+      publish_data.size = publish_data.LaserScans.size();
+      sick_middle_next_ = make_pair(sick_middle_file_list_[current_file_index+1], publish_data);
     }
   }
 }
