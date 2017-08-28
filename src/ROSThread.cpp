@@ -1066,31 +1066,31 @@ void ROSThread::OmniThread()
         cv_bridge::CvImage onmi0_out_msg;
         onmi0_out_msg.header.stamp.fromNSec(data);
         onmi0_out_msg.header.frame_id = "omni0";
-        onmi0_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        onmi0_out_msg.encoding = sensor_msgs::image_encodings::RGB8;
         onmi0_out_msg.image    = omni0_next_img_.second;
 
         cv_bridge::CvImage onmi1_out_msg;
         onmi1_out_msg.header.stamp.fromNSec(data);
         onmi1_out_msg.header.frame_id = "omni1";
-        onmi1_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        onmi1_out_msg.encoding = sensor_msgs::image_encodings::RGB8;
         onmi1_out_msg.image    = omni1_next_img_.second;
 
         cv_bridge::CvImage onmi2_out_msg;
         onmi2_out_msg.header.stamp.fromNSec(data);
         onmi2_out_msg.header.frame_id = "omni2";
-        onmi2_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        onmi2_out_msg.encoding = sensor_msgs::image_encodings::RGB8;
         onmi2_out_msg.image    = omni2_next_img_.second;
 
         cv_bridge::CvImage onmi3_out_msg;
         onmi3_out_msg.header.stamp.fromNSec(data);
         onmi3_out_msg.header.frame_id = "omni3";
-        onmi3_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        onmi3_out_msg.encoding = sensor_msgs::image_encodings::RGB8;
         onmi3_out_msg.image    = omni3_next_img_.second;
 
         cv_bridge::CvImage onmi4_out_msg;
         onmi4_out_msg.header.stamp.fromNSec(data);
         onmi4_out_msg.header.frame_id = "omni4";
-        onmi4_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+        onmi4_out_msg.encoding = sensor_msgs::image_encodings::RGB8;
         onmi4_out_msg.image    = omni4_next_img_.second;
 
         omni0_info_.header.stamp.fromNSec(data);
@@ -1144,31 +1144,31 @@ void ROSThread::OmniThread()
             cv_bridge::CvImage onmi0_out_msg;
             onmi0_out_msg.header.stamp.fromNSec(data);
             onmi0_out_msg.header.frame_id = "omni0";
-            onmi0_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+            onmi0_out_msg.encoding = sensor_msgs::image_encodings::RGB8;
             onmi0_out_msg.image    = omni0_image;
 
             cv_bridge::CvImage onmi1_out_msg;
             onmi1_out_msg.header.stamp.fromNSec(data);
             onmi1_out_msg.header.frame_id = "omni1";
-            onmi1_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+            onmi1_out_msg.encoding = sensor_msgs::image_encodings::RGB8;
             onmi1_out_msg.image    = omni1_image;
 
             cv_bridge::CvImage onmi2_out_msg;
             onmi2_out_msg.header.stamp.fromNSec(data);
             onmi2_out_msg.header.frame_id = "omni2";
-            onmi2_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+            onmi2_out_msg.encoding = sensor_msgs::image_encodings::RGB8;
             onmi2_out_msg.image    = omni2_image;
 
             cv_bridge::CvImage onmi3_out_msg;
             onmi3_out_msg.header.stamp.fromNSec(data);
             onmi3_out_msg.header.frame_id = "omni3";
-            onmi3_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+            onmi3_out_msg.encoding = sensor_msgs::image_encodings::RGB8;
             onmi3_out_msg.image    = omni3_image;
 
             cv_bridge::CvImage onmi4_out_msg;
             onmi4_out_msg.header.stamp.fromNSec(data);
             onmi4_out_msg.header.frame_id = "omni4";
-            onmi4_out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+            onmi4_out_msg.encoding = sensor_msgs::image_encodings::RGB8;
             onmi4_out_msg.image    = omni4_image;
 
             omni0_info_.header.stamp.fromNSec(data);
