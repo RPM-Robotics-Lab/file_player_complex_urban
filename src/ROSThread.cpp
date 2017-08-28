@@ -173,6 +173,7 @@ void ROSThread::Ready()
 
   fp = fopen((data_folder_path_+"/sensor_data/data_stamp.csv").c_str(),"r");
   char data_name[50];
+  data_stamp_.clear();
   while(fscanf(fp,"%ld,%s\n",&stamp,data_name) == 2){
     data_stamp_[stamp] = data_name;
   }
@@ -185,6 +186,7 @@ void ROSThread::Ready()
   fp = fopen((data_folder_path_+"/sensor_data/altimeter.csv").c_str(),"r");
   double altimeter_value;
   irp_sen_msgs::altimeter altimeter_data;
+  altimeter_data_.clear();
   while(fscanf(fp,"%ld,%lf\n",&stamp,&altimeter_value) == 2){
     altimeter_data.header.stamp.fromNSec(stamp);
     altimeter_data.header.frame_id = "altimeter";
@@ -198,6 +200,7 @@ void ROSThread::Ready()
   fp = fopen((data_folder_path_+"/sensor_data/encoder.csv").c_str(),"r");
   int64_t left_count, right_count;
   irp_sen_msgs::encoder encoder_data;
+  encoder_data_.clear();
   while(fscanf(fp,"%ld,%ld,%ld\n",&stamp,&left_count,&right_count) == 3){
     encoder_data.header.stamp.fromNSec(stamp);
     encoder_data.header.frame_id = "encoder";
@@ -212,6 +215,7 @@ void ROSThread::Ready()
   fp = fopen((data_folder_path_+"/sensor_data/fog.csv").c_str(),"r");
   float d_roll, d_pitch, d_yaw;
   irp_sen_msgs::fog_3axis fog_data;
+  fog_data_.clear();
   while(fscanf(fp,"%ld,%f,%f,%f\n",&stamp,&d_roll,&d_pitch,&d_yaw) == 4){
     fog_data.header.stamp.fromNSec(stamp);
     fog_data.header.frame_id = "dsp1760";
@@ -228,6 +232,7 @@ void ROSThread::Ready()
   double latitude, longitude, altitude;
   double cov[9];
   sensor_msgs::NavSatFix gps_data;
+  gps_data_.clear();
   while(fscanf(fp,"%ld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf\n",&stamp,&latitude,&longitude,&altitude,&cov[0],&cov[1],&cov[2],&cov[3],&cov[4],&cov[5],&cov[6],&cov[7],&cov[8]) == 13){
     gps_data.header.stamp.fromNSec(stamp);
     gps_data.header.frame_id = "gps";
@@ -245,7 +250,8 @@ void ROSThread::Ready()
   double x_coordinate, y_coordinate, horizental_precision, lat_std, lon_std, altitude_std, heading_magnet, speed_knot, speed_km;
   int fix_state, number_of_sat, heading_valid;
   char GNVTG_mode;
-  irp_sen_msgs::vrs vrs_data;;
+  irp_sen_msgs::vrs vrs_data;
+  vrs_data_.clear();
   while(fscanf(fp,"%ld,%lf,%lf,%lf,%lf,%lf,%d,%d,%lf,%lf,%lf,%lf,%d,%lf,%lf,%lf,%c\n",&stamp,&latitude,&longitude,&x_coordinate,
                &y_coordinate,&altitude,&fix_state,&number_of_sat,&horizental_precision,&lat_std,&lon_std,&altitude_std,
                &heading_valid,&heading_magnet,&speed_knot,&speed_km,&GNVTG_mode) == 17){
@@ -279,7 +285,8 @@ void ROSThread::Ready()
   //Read IMU data
   fp = fopen((data_folder_path_+"/sensor_data/xsens_imu.csv").c_str(),"r");
   double q_x,q_y,q_z,q_w,x,y,z;
-  irp_sen_msgs::imu imu_data;;
+  irp_sen_msgs::imu imu_data;
+  imu_data_.clear();
   while(fscanf(fp,"%ld,%lf,%lf,%lf,%lf,%lf,%lf,%lf\n",&stamp,&q_x,&q_y,&q_z,&q_w,&x,&y,&z) == 8){
     imu_data.header.stamp.fromNSec(stamp);
     imu_data.header.frame_id = "xsens_imu";
@@ -294,6 +301,13 @@ void ROSThread::Ready()
   }
   cout << "IMU data are loaded" << endl;
   fclose(fp);
+
+  velodyne_left_file_list_.clear();
+  velodyne_right_file_list_.clear();
+  sick_back_file_list_.clear();
+  sick_middle_file_list_.clear();
+  stereo_file_list_.clear();
+  omni_file_list_.clear();
 
   GetDirList(data_folder_path_ + "/sensor_data/VLP_left",velodyne_left_file_list_);
   GetDirList(data_folder_path_ + "/sensor_data/VLP_right",velodyne_right_file_list_);
@@ -312,6 +326,7 @@ void ROSThread::Ready()
   getline(in, line);
   stringstream sep_left(line);
   int index = 0;
+  stereo_left_info_.D.clear();
   while (getline(sep_left, data, ',')) {
       if(index == 0) stereo_left_info_.height = stod(data);
       if(index == 1) stereo_left_info_.width = stod(data);
@@ -331,6 +346,7 @@ void ROSThread::Ready()
   getline(in, line);
   stringstream sep_right(line);
   index = 0;
+  stereo_right_info_.D.clear();
   while (getline(sep_right, data, ',')) {
       if(index == 0) stereo_right_info_.height = stod(data);
       if(index == 1) stereo_right_info_.width = stod(data);
@@ -351,6 +367,7 @@ void ROSThread::Ready()
   getline(in, line);
   stringstream sep_omni0(line);
   index = 0;
+  omni0_info_.D.clear();
   while (getline(sep_omni0, data, ',')) {
       if(index == 0) omni0_info_.height = stod(data);
       if(index == 1) omni0_info_.width = stod(data);
@@ -371,6 +388,7 @@ void ROSThread::Ready()
   getline(in, line);
   stringstream sep_omni1(line);
   index = 0;
+  omni1_info_.D.clear();
   while (getline(sep_omni1, data, ',')) {
       if(index == 0) omni1_info_.height = stod(data);
       if(index == 1) omni1_info_.width = stod(data);
@@ -391,6 +409,7 @@ void ROSThread::Ready()
   getline(in, line);
   stringstream sep_omni2(line);
   index = 0;
+  omni2_info_.D.clear();
   while (getline(sep_omni2, data, ',')) {
       if(index == 0) omni2_info_.height = stod(data);
       if(index == 1) omni2_info_.width = stod(data);
@@ -411,6 +430,7 @@ void ROSThread::Ready()
   getline(in, line);
   stringstream sep_omni3(line);
   index = 0;
+  omni3_info_.D.clear();
   while (getline(sep_omni3, data, ',')) {
       if(index == 0) omni3_info_.height = stod(data);
       if(index == 1) omni3_info_.width = stod(data);
@@ -431,6 +451,7 @@ void ROSThread::Ready()
   getline(in, line);
   stringstream sep_omni4(line);
   index = 0;
+  omni4_info_.D.clear();
   while (getline(sep_omni4, data, ',')) {
       if(index == 0) omni4_info_.height = stod(data);
       if(index == 1) omni4_info_.width = stod(data);
