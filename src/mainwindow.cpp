@@ -10,6 +10,12 @@ MainWindow::MainWindow(QWidget *parent) :
   my_ros_ = new ROSThread(this, &mutex);
   ui_->setupUi(this);
   my_ros_->start();
+
+  play_flag_ = false;
+  pause_flag_ = false;
+  loop_flag_ = false;
+  stop_skip_flag_ = false;
+
   connect(my_ros_, SIGNAL(StampShow(quint64)), this, SLOT(SetStamp(quint64)));
 
   connect(ui_->quitButton, SIGNAL(pressed()), this, SLOT(TryClose()));
@@ -22,11 +28,18 @@ MainWindow::MainWindow(QWidget *parent) :
   ui_->doubleSpinBox->setValue(1.0);
   ui_->doubleSpinBox->setSingleStep(0.1);
   connect(ui_->checkBox, SIGNAL(stateChanged(int)), this, SLOT (LoopFlagChange(int)));
-  ui_->checkBox->setCheckState(Qt::Unchecked);
+  if(loop_flag_ == true){
+    ui_->checkBox->setCheckState(Qt::Checked);
+  }else{
+    ui_->checkBox->setCheckState(Qt::Unchecked);
+  }
+  connect(ui_->checkBox_2, SIGNAL(stateChanged(int)), this, SLOT (StopSkipFlagChange(int)));
+  if(stop_skip_flag_ == true){
+    ui_->checkBox_2->setCheckState(Qt::Checked);
+  }else{
+    ui_->checkBox_2->setCheckState(Qt::Unchecked);
+  }
 
-  play_flag_ = false;
-  pause_flag_ = false;
-  loop_flag_ = false;
 }
 
 MainWindow::~MainWindow()
@@ -112,5 +125,15 @@ void MainWindow::LoopFlagChange(int value)
   }else if(value == 0){
     loop_flag_ = false;
     my_ros_->loop_flag_ = false;
+  }
+}
+void MainWindow::StopSkipFlagChange(int value)
+{
+  if(value == 2){
+    stop_skip_flag_ = true;
+    my_ros_->stop_skip_flag_ = true;
+  }else if(value == 0){
+    stop_skip_flag_ = false;
+    my_ros_->stop_skip_flag_ = false;
   }
 }

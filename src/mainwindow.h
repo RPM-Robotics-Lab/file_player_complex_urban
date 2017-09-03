@@ -55,6 +55,7 @@ private slots:
   void Pause();
   void PlaySpeedChange(double value);
   void LoopFlagChange(int value);
+  void StopSkipFlagChange(int value);
   void SetStamp(quint64 stamp);
 
 signals:
@@ -67,6 +68,7 @@ private:
   bool play_flag_;
   bool pause_flag_;
   bool loop_flag_;
+  bool stop_skip_flag_;
 
 };
 

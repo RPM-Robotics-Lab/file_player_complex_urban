@@ -92,6 +92,7 @@ public:
     bool play_flag_;
     bool pause_flag_;
     bool loop_flag_;
+    bool stop_skip_flag_;
     double play_rate_;
     string data_folder_path_;
     void Ready();
@@ -129,7 +130,7 @@ private:
     ros::Publisher omni3_info_pub_;
     ros::Publisher omni4_info_pub_;
 
-    map<int64_t, string>                    data_stamp_;
+    multimap<int64_t, string>                    data_stamp_;
     map<int64_t, irp_sen_msgs::altimeter>   altimeter_data_;
     map<int64_t, irp_sen_msgs::encoder>     encoder_data_;
     map<int64_t, irp_sen_msgs::fog_3axis>   fog_data_;
@@ -150,6 +151,8 @@ private:
     DataThread<int64_t> velodyne_right_thread_;
     DataThread<int64_t> sick_back_thread_;
     DataThread<int64_t> sick_middle_thread_;
+
+    map<int64_t, int64_t> stop_period_; //start and stop stamp
 
     void DataStampThread();
     void AltimeterThread();

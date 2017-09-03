@@ -11,6 +11,7 @@ ROSThread::ROSThread(QObject *parent, QMutex *th_mutex) :
   processed_stamp_ = 0;
   play_rate_ = 1.0;
   loop_flag_ = false;
+  stop_skip_flag_ = false;
 }
 
 ROSThread::~ROSThread()
@@ -175,7 +176,8 @@ void ROSThread::Ready()
   char data_name[50];
   data_stamp_.clear();
   while(fscanf(fp,"%ld,%s\n",&stamp,data_name) == 2){
-    data_stamp_[stamp] = data_name;
+//    data_stamp_[stamp] = data_name;
+    data_stamp_.insert( multimap<int64_t, string>::value_type(stamp, data_name));
   }
   cout << "Stamp data are loaded" << endl;
   fclose(fp);
@@ -198,16 +200,41 @@ void ROSThread::Ready()
 
   //Read encoder data
   fp = fopen((data_folder_path_+"/sensor_data/encoder.csv").c_str(),"r");
+  int64_t pre_left_count, pre_right_count;
   int64_t left_count, right_count;
+  int64_t stop_start_stamp, stop_end_stamp;
+  bool stop_period_start = false;
   irp_sen_msgs::encoder encoder_data;
   encoder_data_.clear();
+  int encoder_stop_count = 0;
   while(fscanf(fp,"%ld,%ld,%ld\n",&stamp,&left_count,&right_count) == 3){
+    if(left_count == pre_left_count && right_count == pre_right_count && stop_period_start == false){
+      encoder_stop_count++;
+      if(encoder_stop_count >= 10){
+//        cout << "start: " << left_count << " " << right_count << endl;
+        stop_start_stamp = stamp;
+        stop_period_start = true;
+        encoder_stop_count = 0;
+      }
+    }else{
+      encoder_stop_count = 0;
+    }
+    if((left_count != pre_left_count || right_count != pre_right_count)&& stop_period_start == true){
+//      cout << "end: " << left_count << " " << right_count << endl;
+      stop_end_stamp = stamp;
+      stop_period_[stop_start_stamp] = stop_end_stamp;
+      stop_period_start = false;
+    }
+
     encoder_data.header.stamp.fromNSec(stamp);
     encoder_data.header.frame_id = "encoder";
     encoder_data.left_count = left_count;
     encoder_data.right_count = right_count;
     encoder_data_[stamp] = encoder_data;
+    pre_left_count = left_count;
+    pre_right_count = right_count;
   }
+//  cout << stop_period_.size() << endl;
   cout << "Encoder data are loaded" << endl;
   fclose(fp);
 
@@ -500,16 +527,33 @@ void ROSThread::Ready()
 
 void ROSThread::DataStampThread()
 {
+  auto stop_region_iter = stop_period_.begin();
+
   for(auto iter = data_stamp_.begin() ; iter != data_stamp_.end() ; iter ++){
     auto stamp = iter->first;
 
     while((stamp > (initial_data_stamp_+processed_stamp_))&&(data_stamp_thread_.active_ == true)){
       if(processed_stamp_ == 0){
           iter = data_stamp_.begin();
+          stop_region_iter = stop_period_.begin();
           stamp = iter->first;
       }
       usleep(1);
     }
+    //check whether stop region or not
+    if(stamp == stop_region_iter->first){
+      if(stop_skip_flag_ == true){
+        cout << "Jump stop period!!" << endl;
+        iter = data_stamp_.find(stop_region_iter->second);  //find stop region end
+        iter = prev(iter,1);
+        processed_stamp_ = stop_region_iter->second - initial_data_stamp_;
+      }
+      stop_region_iter++;
+      if(stop_skip_flag_ == true){
+        continue;
+      }
+    }
+
     if(data_stamp_thread_.active_ == false) return;
     if(iter->second.compare("altimeter") == 0){
       altimter_thread_.push(stamp);
@@ -552,12 +596,14 @@ void ROSThread::DataStampThread()
     emit StampShow(stamp);
     if(loop_flag_ == true && iter == prev(data_stamp_.end(),1)){
         iter = data_stamp_.begin();
+        stop_region_iter = stop_period_.begin();
         processed_stamp_ = 0;
     }
     if(loop_flag_ == false && iter == prev(data_stamp_.end(),1)){
         play_flag_ = false;
         while(!play_flag_){
             iter = data_stamp_.begin();
+            stop_region_iter = stop_period_.begin();
             processed_stamp_ = 0;
             usleep(10000);
         }
