@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(file_player)
 
+if (NOT CMAKE_BUILD_TYPE)
+  set (CMAKE_BUILD_TYPE release)
+endif ()
+
 find_package(catkin REQUIRED cmake_modules
   COMPONENTS
   roscpp
