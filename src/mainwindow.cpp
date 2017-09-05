@@ -91,6 +91,11 @@ void MainWindow::Play()
     play_flag_ = true;
     my_ros_->play_flag_ = true;
     this->ui_->pushButton_2->setText(QString::fromStdString("End"));
+
+    pause_flag_ = false;
+    my_ros_->pause_flag_ = false;
+    this->ui_->pushButton_3->setText(QString::fromStdString("Pause"));
+
   }else{
     play_flag_ = false;
     my_ros_->play_flag_ = false;
