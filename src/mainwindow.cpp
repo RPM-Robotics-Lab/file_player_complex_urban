@@ -69,6 +69,14 @@ void MainWindow::TryClose()
 
 void MainWindow::FilePathSet()
 {
+  play_flag_ = false;
+  my_ros_->play_flag_ = false;
+  this->ui_->pushButton_2->setText(QString::fromStdString("Play"));
+
+  pause_flag_ = false;
+  my_ros_->pause_flag_ = false;
+  this->ui_->pushButton_3->setText(QString::fromStdString("Pause"));
+
   QFileDialog dialog;
   this->ui_->label->setText("Data is beging loaded.....");
   data_folder_path_ = dialog.getExistingDirectory();
