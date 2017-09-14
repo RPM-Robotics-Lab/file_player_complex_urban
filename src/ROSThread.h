@@ -44,7 +44,6 @@
 #include <irp_sen_msgs/imu.h>
 #include <irp_sen_msgs/fog_3axis.h>
 #include <irp_sen_msgs/LaserScanArray.h>
-#include <velodyne_msgs/VelodyneScan.h>
 
 #include <dynamic_reconfigure/server.h>
 #include <file_player/dynamic_file_playerConfig.h>
