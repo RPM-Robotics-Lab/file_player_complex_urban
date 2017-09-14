@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>IRAP Viewer</string>
+   <string>File Player</string>
   </property>
   <property name="toolTipDuration">
    <number>2</number>

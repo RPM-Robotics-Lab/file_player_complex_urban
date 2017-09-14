@@ -18,55 +18,56 @@ ROSThread::~ROSThread()
 {
 
   data_stamp_thread_.active_ = false;
+  altimter_thread_.active_ = false;
+  encoder_thread_.active_ = false;
+  fog_thread_.active_ = false;
+  gps_thread_.active_ = false;
+  vrs_thread_.active_ = false;
+  imu_thread_.active_ = false;
+  velodyne_left_thread_.active_ = false;
+  velodyne_right_thread_.active_ = false;
+  sick_back_thread_.active_ = false;
+  sick_middle_thread_.active_ = false;
+  stereo_thread_.active_ = false;
+  omni_thread_.active_ = false;
+  usleep(100000);
+
   data_stamp_thread_.cv_.notify_all();
   if(data_stamp_thread_.thread_.joinable())  data_stamp_thread_.thread_.join();
 
-  altimter_thread_.active_ = false;
   altimter_thread_.cv_.notify_all();
   if(altimter_thread_.thread_.joinable()) altimter_thread_.thread_.join();
 
-  encoder_thread_.active_ = false;
   encoder_thread_.cv_.notify_all();
   if(encoder_thread_.thread_.joinable()) encoder_thread_.thread_.join();
 
-  fog_thread_.active_ = false;
   fog_thread_.cv_.notify_all();
   if(fog_thread_.thread_.joinable()) fog_thread_.thread_.join();
 
-  gps_thread_.active_ = false;
   gps_thread_.cv_.notify_all();
   if(gps_thread_.thread_.joinable()) gps_thread_.thread_.join();
 
-  vrs_thread_.active_ = false;
   vrs_thread_.cv_.notify_all();
   if(vrs_thread_.thread_.joinable()) vrs_thread_.thread_.join();
 
-  imu_thread_.active_ = false;
   imu_thread_.cv_.notify_all();
   if(imu_thread_.thread_.joinable()) imu_thread_.thread_.join();
 
-  velodyne_left_thread_.active_ = false;
   velodyne_left_thread_.cv_.notify_all();
   if(velodyne_left_thread_.thread_.joinable()) velodyne_left_thread_.thread_.join();
 
-  velodyne_right_thread_.active_ = false;
   velodyne_right_thread_.cv_.notify_all();
   if(velodyne_right_thread_.thread_.joinable()) velodyne_right_thread_.thread_.join();
 
-  sick_back_thread_.active_ = false;
   sick_back_thread_.cv_.notify_all();
   if(sick_back_thread_.thread_.joinable()) sick_back_thread_.thread_.join();
 
-  sick_middle_thread_.active_ = false;
   sick_middle_thread_.cv_.notify_all();
   if(sick_middle_thread_.thread_.joinable()) sick_middle_thread_.thread_.join();
 
-
-  stereo_thread_.active_ = false;
   stereo_thread_.cv_.notify_all();
   if(stereo_thread_.thread_.joinable()) stereo_thread_.thread_.join();
 
-  omni_thread_.active_ = false;
   omni_thread_.cv_.notify_all();
   if(omni_thread_.thread_.joinable()) omni_thread_.thread_.join();
 }
