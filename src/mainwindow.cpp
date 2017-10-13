@@ -17,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
   stop_skip_flag_ = false;
 
   connect(my_ros_, SIGNAL(StampShow(quint64)), this, SLOT(SetStamp(quint64)));
+  connect(my_ros_, SIGNAL(StartSignal()), this, SLOT(Play()));
 
   connect(ui_->quitButton, SIGNAL(pressed()), this, SLOT(TryClose()));
   connect(ui_->pushButton, SIGNAL(pressed()), this, SLOT(FilePathSet()));
@@ -95,7 +96,7 @@ void MainWindow::SetStamp(quint64 stamp)
 
 void MainWindow::Play()
 {
-  if(play_flag_ == false){
+  if(my_ros_->play_flag_ == false){
     play_flag_ = true;
     my_ros_->play_flag_ = true;
     this->ui_->pushButton_2->setText(QString::fromStdString("End"));

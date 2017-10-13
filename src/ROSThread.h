@@ -30,6 +30,7 @@
 #include <sensor_msgs/LaserScan.h>
 
 #include <std_msgs/String.h>
+#include <std_msgs/Bool.h>
 #include <std_srvs/SetBool.h>
 #include <std_msgs/Int64MultiArray.h>
 #include <std_msgs/Float32.h>
@@ -99,9 +100,12 @@ public:
 
 signals:
     void StampShow(quint64 stamp);
-
+    void StartSignal();
 
 private:
+
+    ros::Subscriber start_sub_;
+    ros::Subscriber stop_sub_;
 
     ros::Publisher altimeter_pub_;
     ros::Publisher encoder_pub_;
@@ -167,6 +171,9 @@ private:
     void SickMiddleThread();
     void StereoThread();
     void OmniThread();
+
+    void FilePlayerStart(const std_msgs::BoolConstPtr& msg);
+    void FilePlayerStop(const std_msgs::BoolConstPtr& msg);
 
     vector<string> velodyne_left_file_list_;
     vector<string> velodyne_right_file_list_;

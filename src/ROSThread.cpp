@@ -79,6 +79,9 @@ void ROSThread::ros_initialize(ros::NodeHandle &n)
   pre_timer_stamp_ = ros::Time::now().toNSec();
   timer_ = nh_.createTimer(ros::Duration(0.0001), boost::bind(&ROSThread::TimerCallback, this, _1));
 
+  start_sub_  = nh_.subscribe<std_msgs::Bool>("/file_player_start", 1, boost::bind(&ROSThread::FilePlayerStart, this, _1));
+  stop_sub_    = nh_.subscribe<std_msgs::Bool>("/file_player_stop", 1, boost::bind(&ROSThread::FilePlayerStop, this, _1));
+
   altimeter_pub_ = nh_.advertise<irp_sen_msgs::altimeter>("/altimeter_data", 1000);
   encoder_pub_ = nh_.advertise<irp_sen_msgs::encoder>("/encoder_count", 1000);
   fog_pub_ = nh_.advertise<irp_sen_msgs::fog_3axis>("/dsp1760_data", 1000);
@@ -1378,3 +1381,17 @@ int ROSThread::GetDirList(string dir, vector<string> &files)
     return 0;
 }
 
+void ROSThread::FilePlayerStart(const std_msgs::BoolConstPtr& msg)
+{
+  cout << "File player auto start" << endl;
+  usleep(1000000);
+  play_flag_ = false;
+  emit StartSignal();
+}
+
+void ROSThread::FilePlayerStop(const std_msgs::BoolConstPtr& msg)
+{
+  cout << "File player auto stop" << endl;
+  play_flag_ = true;
+  emit StartSignal();
+}
