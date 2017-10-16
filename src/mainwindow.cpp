@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
   play_flag_ = false;
   pause_flag_ = false;
   loop_flag_ = false;
-  stop_skip_flag_ = false;
+  stop_skip_flag_ = true;
 
   connect(my_ros_, SIGNAL(StampShow(quint64)), this, SLOT(SetStamp(quint64)));
   connect(my_ros_, SIGNAL(StartSignal()), this, SLOT(Play()));

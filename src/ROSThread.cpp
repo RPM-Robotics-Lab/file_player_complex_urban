@@ -11,7 +11,7 @@ ROSThread::ROSThread(QObject *parent, QMutex *th_mutex) :
   processed_stamp_ = 0;
   play_rate_ = 1.0;
   loop_flag_ = false;
-  stop_skip_flag_ = false;
+  stop_skip_flag_ = true;
 }
 
 ROSThread::~ROSThread()
