@@ -547,7 +547,7 @@ void ROSThread::DataStampThread()
     //check whether stop region or not
     if(stamp == stop_region_iter->first){
       if(stop_skip_flag_ == true){
-        cout << "Jump stop period!!" << endl;
+        cout << "Jump stop section!!" << endl;
         iter = data_stamp_.find(stop_region_iter->second);  //find stop region end
         iter = prev(iter,1);
         processed_stamp_ = stop_region_iter->second - initial_data_stamp_;
