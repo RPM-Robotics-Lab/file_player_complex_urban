@@ -103,6 +103,9 @@ signals:
 
 private:
 
+    bool stereo_active_;
+    bool omni_active_;
+
     ros::Subscriber start_sub_;
     ros::Subscriber stop_sub_;
 

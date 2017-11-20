@@ -12,6 +12,8 @@ ROSThread::ROSThread(QObject *parent, QMutex *th_mutex) :
   play_rate_ = 1.0;
   loop_flag_ = false;
   stop_skip_flag_ = true;
+  stereo_active_ = false;
+  omni_active_ = false;
 }
 
 ROSThread::~ROSThread()
@@ -368,6 +370,7 @@ void ROSThread::Ready()
       if(index == 37) stereo_left_info_.binning_x = atof(data.c_str());
       if(index == 38){
           stereo_left_info_.binning_y = atof(data.c_str());
+          stereo_active_ = true;
           break;
       }
       index++;
@@ -409,6 +412,7 @@ void ROSThread::Ready()
       if(index == 37) omni0_info_.binning_x = atof(data.c_str());
       if(index == 38){
           omni0_info_.binning_y = atof(data.c_str());
+          omni_active_ = true;
           break;
       }
       index++;
@@ -589,10 +593,10 @@ void ROSThread::DataStampThread()
     }else if(iter->second.compare("sick_middle") == 0){
         sick_middle_thread_.push(stamp);
         sick_middle_thread_.cv_.notify_all();
-    }else if(iter->second.compare("stereo") == 0){
+    }else if(iter->second.compare("stereo") == 0 && stereo_active_ == true){
         stereo_thread_.push(stamp);
         stereo_thread_.cv_.notify_all();
-    }else if(iter->second.compare("omni") == 0){
+    }else if(iter->second.compare("omni") == 0 && omni_active_ == true){
         omni_thread_.push(stamp);
         omni_thread_.cv_.notify_all();
     }
