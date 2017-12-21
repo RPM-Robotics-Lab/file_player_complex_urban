@@ -551,7 +551,7 @@ void ROSThread::DataStampThread()
     //check whether stop region or not
     if(stamp == stop_region_iter->first){
       if(stop_skip_flag_ == true){
-        cout << "Jump stop section!!" << endl;
+        cout << "Skip stop section!!" << endl;
         iter = data_stamp_.find(stop_region_iter->second);  //find stop region end
         iter = prev(iter,1);
         processed_stamp_ = stop_region_iter->second - initial_data_stamp_;
@@ -742,10 +742,11 @@ void ROSThread::ImuThread()
 
 void ROSThread::TimerCallback(const ros::TimerEvent&)
 {
+    int64_t current_stamp = ros::Time::now().toNSec();
     if(play_flag_ == true && pause_flag_ == false){
-      processed_stamp_ += static_cast<int64_t>(static_cast<double>(ros::Time::now().toNSec() - pre_timer_stamp_) * play_rate_);
+      processed_stamp_ += static_cast<int64_t>(static_cast<double>(current_stamp - pre_timer_stamp_) * play_rate_);
     }
-    pre_timer_stamp_ = ros::Time::now().toNSec();
+    pre_timer_stamp_ = current_stamp;
 
     if(play_flag_ == false){
       processed_stamp_ = 0; //reset
