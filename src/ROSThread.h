@@ -103,6 +103,8 @@ signals:
 
 private:
 
+    int search_bound_;
+
     bool stereo_active_;
     bool omni_active_;
 

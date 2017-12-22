@@ -14,6 +14,7 @@ ROSThread::ROSThread(QObject *parent, QMutex *th_mutex) :
   stop_skip_flag_ = true;
   stereo_active_ = false;
   omni_active_ = false;
+  search_bound_ = 10;
 }
 
 ROSThread::~ROSThread()
@@ -754,6 +755,8 @@ void ROSThread::TimerCallback(const ros::TimerEvent&)
 }
 void ROSThread::VelodyneLeftThread()
 {
+  int current_file_index = 0;
+  int previous_file_index = 0;
   while(1){
     std::unique_lock<std::mutex> ul(velodyne_left_thread_.mutex_);
     velodyne_left_thread_.cv_.wait(ul);
@@ -777,7 +780,7 @@ void ROSThread::VelodyneLeftThread()
         cloud.clear();
         sensor_msgs::PointCloud2 publish_cloud;
         string current_file_name = data_folder_path_ + "/sensor_data/VLP_left" +"/"+ to_string(data) + ".bin";
-        if(find(velodyne_left_file_list_.begin(),velodyne_left_file_list_.end(),to_string(data)+".bin") != velodyne_left_file_list_.end()){
+        if(find(next(velodyne_left_file_list_.begin(),max(0,previous_file_index-search_bound_)),velodyne_left_file_list_.end(),to_string(data)+".bin") != velodyne_left_file_list_.end()){
             ifstream file;
             file.open(current_file_name, ios::in|ios::binary);
             while(!file.eof()){
@@ -794,16 +797,17 @@ void ROSThread::VelodyneLeftThread()
             publish_cloud.header.stamp.fromNSec(data);
             publish_cloud.header.frame_id = "left_velodyne";
             velodyne_left_pub_.publish(publish_cloud);
-        }
 
+        }
+        previous_file_index = 0;
       }
 
       //load next data
       pcl::PointCloud<pcl::PointXYZI> cloud;
       cloud.clear();
       sensor_msgs::PointCloud2 publish_cloud;
-      int current_file_index = find(velodyne_left_file_list_.begin(),velodyne_left_file_list_.end(),to_string(data)+".bin") - velodyne_left_file_list_.begin();
-      if(find(velodyne_left_file_list_.begin(),velodyne_left_file_list_.end(),velodyne_left_file_list_[current_file_index+1]) != velodyne_left_file_list_.end()){
+      current_file_index = find(next(velodyne_left_file_list_.begin(),max(0,previous_file_index-search_bound_)),velodyne_left_file_list_.end(),to_string(data)+".bin") - velodyne_left_file_list_.begin();
+      if(find(next(velodyne_left_file_list_.begin(),max(0,previous_file_index-search_bound_)),velodyne_left_file_list_.end(),velodyne_left_file_list_[current_file_index+1]) != velodyne_left_file_list_.end()){
           string next_file_name = data_folder_path_ + "/sensor_data/VLP_left" +"/"+ velodyne_left_file_list_[current_file_index+1];
 
           ifstream file;
@@ -820,12 +824,15 @@ void ROSThread::VelodyneLeftThread()
           pcl::toROSMsg(cloud, publish_cloud);
           velodyne_left_next_ = make_pair(velodyne_left_file_list_[current_file_index+1], publish_cloud);
       }
+      previous_file_index = current_file_index;
     }
     if(velodyne_left_thread_.active_ == false) return;
   }
 }
 void ROSThread::VelodyneRightThread()
 {
+  int current_file_index = 0;
+  int previous_file_index = 0;
   while(1){
     std::unique_lock<std::mutex> ul(velodyne_right_thread_.mutex_);
     velodyne_right_thread_.cv_.wait(ul);
@@ -850,7 +857,7 @@ void ROSThread::VelodyneRightThread()
         cloud.clear();
         sensor_msgs::PointCloud2 publish_cloud;
         string current_file_name = data_folder_path_ + "/sensor_data/VLP_right" +"/"+ to_string(data) + ".bin";
-        if(find(velodyne_right_file_list_.begin(),velodyne_right_file_list_.end(),to_string(data)+".bin") != velodyne_right_file_list_.end()){
+        if(find(next(velodyne_right_file_list_.begin(),max(0,previous_file_index-search_bound_)),velodyne_right_file_list_.end(),to_string(data)+".bin") != velodyne_right_file_list_.end()){
             ifstream file;
             file.open(current_file_name, ios::in|ios::binary);
             while(!file.eof()){
@@ -867,16 +874,17 @@ void ROSThread::VelodyneRightThread()
             publish_cloud.header.stamp.fromNSec(data);
             publish_cloud.header.frame_id = "right_velodyne";
             velodyne_right_pub_.publish(publish_cloud);
-        }
 
+        }
+        previous_file_index = 0;
       }
 
       //load next data
       pcl::PointCloud<pcl::PointXYZI> cloud;
       cloud.clear();
       sensor_msgs::PointCloud2 publish_cloud;
-      int current_file_index = find(velodyne_right_file_list_.begin(),velodyne_right_file_list_.end(),to_string(data)+".bin") - velodyne_right_file_list_.begin();
-      if(find(velodyne_right_file_list_.begin(),velodyne_right_file_list_.end(),velodyne_right_file_list_[current_file_index+1]) != velodyne_right_file_list_.end()){
+      current_file_index = find(next(velodyne_right_file_list_.begin(),max(0,previous_file_index-search_bound_)),velodyne_right_file_list_.end(),to_string(data)+".bin") - velodyne_right_file_list_.begin();
+      if(find(next(velodyne_right_file_list_.begin(),max(0,previous_file_index-search_bound_)),velodyne_right_file_list_.end(),velodyne_right_file_list_[current_file_index+1]) != velodyne_right_file_list_.end()){
           string next_file_name = data_folder_path_ + "/sensor_data/VLP_right" +"/"+ velodyne_right_file_list_[current_file_index+1];
 
           ifstream file;
@@ -894,12 +902,16 @@ void ROSThread::VelodyneRightThread()
           velodyne_right_next_ = make_pair(velodyne_right_file_list_[current_file_index+1], publish_cloud);
       }
 
+      previous_file_index = current_file_index;
     }
     if(velodyne_right_thread_.active_ == false) return;
   }
 }
 void ROSThread::SickBackThread()
 {
+  int current_file_index = 0;
+  int previous_file_index = 0;
+
   while(1){
     std::unique_lock<std::mutex> ul(sick_back_thread_.mutex_);
     sick_back_thread_.cv_.wait(ul);
@@ -923,7 +935,7 @@ void ROSThread::SickBackThread()
         irp_sen_msgs::LaserScanArray publish_data;
         sensor_msgs::LaserScan scan_data;
         string current_file_name = data_folder_path_ + "/sensor_data/SICK_back" +"/"+ to_string(data)+".bin";
-        if(find(sick_back_file_list_.begin(),sick_back_file_list_.end(),to_string(data)+".bin") != sick_back_file_list_.end()){
+        if(find(next(sick_back_file_list_.begin(),max(0,previous_file_index-search_bound_)),sick_back_file_list_.end(),to_string(data)+".bin") != sick_back_file_list_.end()){
             ifstream file;
             file.open(current_file_name, ios::in|ios::binary);
             while(!file.eof()){
@@ -949,15 +961,16 @@ void ROSThread::SickBackThread()
             publish_data.header.stamp.fromNSec(data);
             publish_data.header.frame_id = "back_sick";
             sick_back_pub_.publish(publish_data);
-        }
 
+        }
+        previous_file_index = 0;
       }
 
       //load next data
       irp_sen_msgs::LaserScanArray publish_data;
       sensor_msgs::LaserScan scan_data;
-      int current_file_index = find(sick_back_file_list_.begin(),sick_back_file_list_.end(),to_string(data)+".bin") - sick_back_file_list_.begin();
-      if(find(sick_back_file_list_.begin(),sick_back_file_list_.end(),sick_back_file_list_[current_file_index+1]) != sick_back_file_list_.end()){
+      current_file_index = find(next(sick_back_file_list_.begin(),max(0,previous_file_index-search_bound_)),sick_back_file_list_.end(),to_string(data)+".bin") - sick_back_file_list_.begin();
+      if(find(next(sick_back_file_list_.begin(),max(0,previous_file_index-search_bound_)),sick_back_file_list_.end(),sick_back_file_list_[current_file_index+1]) != sick_back_file_list_.end()){
           string next_file_name = data_folder_path_ + "/sensor_data/SICK_back" +"/"+ sick_back_file_list_[current_file_index+1];
 
           ifstream file;
@@ -985,6 +998,7 @@ void ROSThread::SickBackThread()
           sick_back_next_ = make_pair(sick_back_file_list_[current_file_index+1], publish_data);
       }
 
+      previous_file_index = current_file_index;
     }
     if(sick_back_thread_.active_ == false) return;
   }
@@ -992,6 +1006,9 @@ void ROSThread::SickBackThread()
 }
 void ROSThread::SickMiddleThread()
 {
+  int current_file_index = 0;
+  int previous_file_index = 0;
+
   while(1){
     std::unique_lock<std::mutex> ul(sick_middle_thread_.mutex_);
     sick_middle_thread_.cv_.wait(ul);
@@ -1014,7 +1031,7 @@ void ROSThread::SickMiddleThread()
         irp_sen_msgs::LaserScanArray publish_data;
         sensor_msgs::LaserScan scan_data;
         string current_file_name = data_folder_path_ + "/sensor_data/SICK_middle" +"/"+ to_string(data)+".bin";
-        if(find(sick_middle_file_list_.begin(),sick_middle_file_list_.end(),to_string(data)+".bin") != sick_middle_file_list_.end()){
+        if(find(next(sick_middle_file_list_.begin(),max(0,previous_file_index-search_bound_)),sick_middle_file_list_.end(),to_string(data)+".bin") != sick_middle_file_list_.end()){
             ifstream file;
             file.open(current_file_name, ios::in|ios::binary);
             while(!file.eof()){
@@ -1040,15 +1057,16 @@ void ROSThread::SickMiddleThread()
             publish_data.header.stamp.fromNSec(data);
             publish_data.header.frame_id = "middle_sick";
             sick_middle_pub_.publish(publish_data);
-        }
 
+        }
+        previous_file_index = 0;
       }
 
       //load next data
       irp_sen_msgs::LaserScanArray publish_data;
       sensor_msgs::LaserScan scan_data;
-      int current_file_index = find(sick_middle_file_list_.begin(),sick_middle_file_list_.end(),to_string(data)+".bin") - sick_middle_file_list_.begin();
-      if(find(sick_middle_file_list_.begin(),sick_middle_file_list_.end(),sick_middle_file_list_[current_file_index+1]) != sick_middle_file_list_.end()){
+      current_file_index = find(next(sick_middle_file_list_.begin(),max(0,previous_file_index-search_bound_)),sick_middle_file_list_.end(),to_string(data)+".bin") - sick_middle_file_list_.begin();
+      if(find(next(sick_middle_file_list_.begin(),max(0,previous_file_index-search_bound_)),sick_middle_file_list_.end(),sick_middle_file_list_[current_file_index+1]) != sick_middle_file_list_.end()){
           string next_file_name = data_folder_path_ + "/sensor_data/SICK_middle" +"/"+ sick_middle_file_list_[current_file_index+1];
 
           ifstream file;
@@ -1076,6 +1094,7 @@ void ROSThread::SickMiddleThread()
           sick_middle_next_ = make_pair(sick_middle_file_list_[current_file_index+1], publish_data);
       }
 
+      previous_file_index = current_file_index;
     }
     if(sick_middle_thread_.active_ == false) return;
   }
@@ -1085,6 +1104,9 @@ void ROSThread::SickMiddleThread()
 
 void ROSThread::StereoThread()
 {
+  int current_img_index = 0;
+  int previous_img_index = 0;
+
   while(1){
     std::unique_lock<std::mutex> ul(stereo_thread_.mutex_);
     stereo_thread_.cv_.wait(ul);
@@ -1154,12 +1176,13 @@ void ROSThread::StereoThread()
             stereo_left_info_pub_.publish(stereo_left_info_);
             stereo_right_info_pub_.publish(stereo_right_info_);
         }
+        previous_img_index = 0;
 
 
       }
 
       //load next image
-      int current_img_index = find(stereo_file_list_.begin(),stereo_file_list_.end(),to_string(data)+".jpeg") - stereo_file_list_.begin();
+      current_img_index = find(next(stereo_file_list_.begin(), max(0,previous_img_index - search_bound_)),stereo_file_list_.end(),to_string(data)+".jpeg") - stereo_file_list_.begin();
       if(current_img_index < stereo_file_list_.size()-2){
 
           string next_stereo_left_name = data_folder_path_ + "/image/stereo_left" +"/"+ stereo_file_list_[current_img_index+1];
@@ -1174,12 +1197,16 @@ void ROSThread::StereoThread()
           }
 
       }
+      previous_img_index = current_img_index;
     }
     if(stereo_thread_.active_ == false) return;
   }
 }
 void ROSThread::OmniThread()
 {
+  int current_img_index = 0;
+  int previous_img_index = 0;
+
   while(1){
     std::unique_lock<std::mutex> ul(omni_thread_.mutex_);
     omni_thread_.cv_.wait(ul);
@@ -1322,11 +1349,12 @@ void ROSThread::OmniThread()
             omni3_info_pub_.publish(omni3_info_);
             omni4_info_pub_.publish(omni4_info_);
         }
+        previous_img_index = 0;
 
       }
 
       //load next image
-      int current_img_index = find(omni_file_list_.begin(),omni_file_list_.end(),to_string(data)+".jpeg") - omni_file_list_.begin();
+      current_img_index = find(next(omni_file_list_.begin(),max(0,previous_img_index - search_bound_)),omni_file_list_.end(),to_string(data)+".jpeg") - omni_file_list_.begin();
       if(current_img_index < omni_file_list_.size()-2){
           string next_omni0_name = data_folder_path_ + "/omni/cam0" +"/"+ omni_file_list_[current_img_index+1];
           string next_omni1_name = data_folder_path_ + "/omni/cam1" +"/"+ omni_file_list_[current_img_index+1];
@@ -1357,6 +1385,7 @@ void ROSThread::OmniThread()
               omni4_next_img_ = make_pair(omni_file_list_[current_img_index+1], omni4_image);
           }
       }
+      previous_img_index = current_img_index;
     }
     if(omni_thread_.active_ == false) return;
   }
