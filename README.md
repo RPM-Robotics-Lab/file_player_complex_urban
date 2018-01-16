@@ -9,7 +9,7 @@ This program is a file player for the complex urban data set. If a user installs
 ```
 $cd ~/catkin_ws/src
 $wstool init
-$wstool merge data_viewer/depend_pack.rosinstall
+$wstool merge file_player/depend_pack.rosinstall
 $wstool update
 ```
 
