@@ -1117,7 +1117,7 @@ void ROSThread::StereoThread()
       auto data = stereo_thread_.pop();
       //process
       //publish
-      if(to_string(data)+".jpeg" == stereo_left_next_img_.first){
+      if(to_string(data)+".png" == stereo_left_next_img_.first){
         cv_bridge::CvImage left_out_msg;
         left_out_msg.header.stamp.fromNSec(data);
         left_out_msg.header.frame_id = "stereo_left";
@@ -1144,8 +1144,8 @@ void ROSThread::StereoThread()
       }else{
         cout << "Re-load stereo image from image path" << endl;
 
-        string current_stereo_left_name = data_folder_path_ + "/image/stereo_left" +"/"+ to_string(data)+".jpeg";
-        string current_stereo_right_name = data_folder_path_ + "/image/stereo_right" +"/"+ to_string(data)+".jpeg";
+        string current_stereo_left_name = data_folder_path_ + "/image/stereo_left" +"/"+ to_string(data)+".png";
+        string current_stereo_right_name = data_folder_path_ + "/image/stereo_right" +"/"+ to_string(data)+".png";
         cv::Mat current_left_image;
         cv::Mat current_right_image;
         current_left_image = imread(current_stereo_left_name, CV_LOAD_IMAGE_COLOR);
@@ -1182,7 +1182,7 @@ void ROSThread::StereoThread()
       }
 
       //load next image
-      current_img_index = find(next(stereo_file_list_.begin(), max(0,previous_img_index - search_bound_)),stereo_file_list_.end(),to_string(data)+".jpeg") - stereo_file_list_.begin();
+      current_img_index = find(next(stereo_file_list_.begin(), max(0,previous_img_index - search_bound_)),stereo_file_list_.end(),to_string(data)+".png") - stereo_file_list_.begin();
       if(current_img_index < stereo_file_list_.size()-2){
 
           string next_stereo_left_name = data_folder_path_ + "/image/stereo_left" +"/"+ stereo_file_list_[current_img_index+1];
