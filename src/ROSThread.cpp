@@ -318,20 +318,45 @@ void ROSThread::Ready()
 
   //Read IMU data
   fp = fopen((data_folder_path_+"/sensor_data/xsens_imu.csv").c_str(),"r");
-  double q_x,q_y,q_z,q_w,x,y,z;
+  double q_x,q_y,q_z,q_w,x,y,z,g_x,g_y,g_z,a_x,a_y,a_z,m_x,m_y,m_z;
   irp_sen_msgs::imu imu_data;
   imu_data_.clear();
-  while(fscanf(fp,"%ld,%lf,%lf,%lf,%lf,%lf,%lf,%lf\n",&stamp,&q_x,&q_y,&q_z,&q_w,&x,&y,&z) == 8){
-    imu_data.header.stamp.fromNSec(stamp);
-    imu_data.header.frame_id = "xsens_imu";
-    imu_data.quaternion_data.x = q_x;
-    imu_data.quaternion_data.y = q_y;
-    imu_data.quaternion_data.z = q_z;
-    imu_data.quaternion_data.w = q_w;
-    imu_data.eular_data.x = x;
-    imu_data.eular_data.y = y;
-    imu_data.eular_data.z = z;
-    imu_data_[stamp] = imu_data;
+  while(1){
+    int length = fscanf(fp,"%ld,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf\n",&stamp,&q_x,&q_y,&q_z,&q_w,&x,&y,&z,&g_x,&g_y,&g_z,&a_x,&a_y,&a_z,&m_x,&m_y,&m_z);
+    if(length != 8 && length != 17) break;
+    if(length == 8){
+      imu_data.header.stamp.fromNSec(stamp);
+      imu_data.header.frame_id = "xsens_imu";
+      imu_data.quaternion_data.x = q_x;
+      imu_data.quaternion_data.y = q_y;
+      imu_data.quaternion_data.z = q_z;
+      imu_data.quaternion_data.w = q_w;
+      imu_data.eular_data.x = x;
+      imu_data.eular_data.y = y;
+      imu_data.eular_data.z = z;
+      imu_data_[stamp] = imu_data;
+
+    }else if(length == 17){
+      imu_data.header.stamp.fromNSec(stamp);
+      imu_data.header.frame_id = "xsens_imu";
+      imu_data.quaternion_data.x = q_x;
+      imu_data.quaternion_data.y = q_y;
+      imu_data.quaternion_data.z = q_z;
+      imu_data.quaternion_data.w = q_w;
+      imu_data.eular_data.x = x;
+      imu_data.eular_data.y = y;
+      imu_data.eular_data.z = z;
+      imu_data.gyro_data.x = g_x;
+      imu_data.gyro_data.y = g_y;
+      imu_data.gyro_data.z = g_z;
+      imu_data.acceleration_data.x = a_x;
+      imu_data.acceleration_data.y = a_y;
+      imu_data.acceleration_data.z = a_z;
+      imu_data.magneticfield_data.x = m_x;
+      imu_data.magneticfield_data.y = m_y;
+      imu_data.magneticfield_data.z = m_z;
+      imu_data_[stamp] = imu_data;
+    }
   }
   cout << "IMU data are loaded" << endl;
   fclose(fp);
