@@ -1141,9 +1141,6 @@ void ROSThread::StereoThread()
     while(!stereo_thread_.data_queue_.empty()){
       auto data = stereo_thread_.pop();
       //process
-
-      cout << "here" << endl;
-
       if(stereo_file_list_.size() == 0) continue;
 
       //publish
