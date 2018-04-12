@@ -373,161 +373,161 @@ void ROSThread::Ready()
   GetDirList(data_folder_path_ + "/sensor_data/SICK_back",sick_back_file_list_);
   GetDirList(data_folder_path_ + "/sensor_data/SICK_middle",sick_middle_file_list_);
   GetDirList(data_folder_path_ + "/image/stereo_left",stereo_file_list_);
-  GetDirList(data_folder_path_ + "/omni/cam0",omni_file_list_);
+//  GetDirList(data_folder_path_ + "/omni/cam0",omni_file_list_);
 
   //load camera info
 
-  string line;
-  ifstream in;
-  string data;
+//  string line;
+//  ifstream in;
+//  string data;
 
-  in.open((data_folder_path_+"/image/stereo_left_info.csv").c_str());
-  getline(in, line);
-  stringstream sep_left(line);
-  int index = 0;
-  stereo_left_info_.D.clear();
-  while (getline(sep_left, data, ',')) {
-      if(index == 0) stereo_left_info_.height = stod(data);
-      if(index == 1) stereo_left_info_.width = stod(data);
-      if(index >= 2 && index <= 6) stereo_left_info_.D.push_back(atof(data.c_str()));
-      if(index >= 7 && index <= 15) stereo_left_info_.K[index-7] = atof(data.c_str());
-      if(index >= 16 && index <= 24) stereo_left_info_.R[index-16] = atof(data.c_str());
-      if(index >= 25 && index <= 36) stereo_left_info_.P[index-25] = atof(data.c_str());
-      if(index == 37) stereo_left_info_.binning_x = atof(data.c_str());
-      if(index == 38){
-          stereo_left_info_.binning_y = atof(data.c_str());
-          stereo_active_ = true;
-          break;
-      }
-      index++;
-  }
-  in.close();
-  in.open((data_folder_path_+"/image/stereo_right_info.csv").c_str());
-  getline(in, line);
-  stringstream sep_right(line);
-  index = 0;
-  stereo_right_info_.D.clear();
-  while (getline(sep_right, data, ',')) {
-      if(index == 0) stereo_right_info_.height = stod(data);
-      if(index == 1) stereo_right_info_.width = stod(data);
-      if(index >= 2 && index <= 6) stereo_right_info_.D.push_back(atof(data.c_str()));
-      if(index >= 7 && index <= 15) stereo_right_info_.K[index-7] = atof(data.c_str());
-      if(index >= 16 && index <= 24) stereo_right_info_.R[index-16] = atof(data.c_str());
-      if(index >= 25 && index <= 36) stereo_right_info_.P[index-25] = atof(data.c_str());
-      if(index == 37) stereo_right_info_.binning_x = atof(data.c_str());
-      if(index == 38){
-          stereo_right_info_.binning_y = atof(data.c_str());
-          break;
-      }
-      index++;
-  }
-  in.close();
+//  in.open((data_folder_path_+"/image/stereo_left_info.csv").c_str());
+//  getline(in, line);
+//  stringstream sep_left(line);
+//  int index = 0;
+//  stereo_left_info_.D.clear();
+//  while (getline(sep_left, data, ',')) {
+//      if(index == 0) stereo_left_info_.height = stod(data);
+//      if(index == 1) stereo_left_info_.width = stod(data);
+//      if(index >= 2 && index <= 6) stereo_left_info_.D.push_back(atof(data.c_str()));
+//      if(index >= 7 && index <= 15) stereo_left_info_.K[index-7] = atof(data.c_str());
+//      if(index >= 16 && index <= 24) stereo_left_info_.R[index-16] = atof(data.c_str());
+//      if(index >= 25 && index <= 36) stereo_left_info_.P[index-25] = atof(data.c_str());
+//      if(index == 37) stereo_left_info_.binning_x = atof(data.c_str());
+//      if(index == 38){
+//          stereo_left_info_.binning_y = atof(data.c_str());
+//          stereo_active_ = true;
+//          break;
+//      }
+//      index++;
+//  }
+//  in.close();
+//  in.open((data_folder_path_+"/image/stereo_right_info.csv").c_str());
+//  getline(in, line);
+//  stringstream sep_right(line);
+//  index = 0;
+//  stereo_right_info_.D.clear();
+//  while (getline(sep_right, data, ',')) {
+//      if(index == 0) stereo_right_info_.height = stod(data);
+//      if(index == 1) stereo_right_info_.width = stod(data);
+//      if(index >= 2 && index <= 6) stereo_right_info_.D.push_back(atof(data.c_str()));
+//      if(index >= 7 && index <= 15) stereo_right_info_.K[index-7] = atof(data.c_str());
+//      if(index >= 16 && index <= 24) stereo_right_info_.R[index-16] = atof(data.c_str());
+//      if(index >= 25 && index <= 36) stereo_right_info_.P[index-25] = atof(data.c_str());
+//      if(index == 37) stereo_right_info_.binning_x = atof(data.c_str());
+//      if(index == 38){
+//          stereo_right_info_.binning_y = atof(data.c_str());
+//          break;
+//      }
+//      index++;
+//  }
+//  in.close();
 
-  in.open((data_folder_path_+"/omni/cam0_info.csv").c_str());
-  getline(in, line);
-  stringstream sep_omni0(line);
-  index = 0;
-  omni0_info_.D.clear();
-  while (getline(sep_omni0, data, ',')) {
-      if(index == 0) omni0_info_.height = stod(data);
-      if(index == 1) omni0_info_.width = stod(data);
-      if(index >= 2 && index <= 6) omni0_info_.D.push_back(atof(data.c_str()));
-      if(index >= 7 && index <= 15) omni0_info_.K[index-7] = atof(data.c_str());
-      if(index >= 16 && index <= 24) omni0_info_.R[index-16] = atof(data.c_str());
-      if(index >= 25 && index <= 36) omni0_info_.P[index-25] = atof(data.c_str());
-      if(index == 37) omni0_info_.binning_x = atof(data.c_str());
-      if(index == 38){
-          omni0_info_.binning_y = atof(data.c_str());
-          omni_active_ = true;
-          break;
-      }
-      index++;
-  }
-  in.close();
+//  in.open((data_folder_path_+"/omni/cam0_info.csv").c_str());
+//  getline(in, line);
+//  stringstream sep_omni0(line);
+//  index = 0;
+//  omni0_info_.D.clear();
+//  while (getline(sep_omni0, data, ',')) {
+//      if(index == 0) omni0_info_.height = stod(data);
+//      if(index == 1) omni0_info_.width = stod(data);
+//      if(index >= 2 && index <= 6) omni0_info_.D.push_back(atof(data.c_str()));
+//      if(index >= 7 && index <= 15) omni0_info_.K[index-7] = atof(data.c_str());
+//      if(index >= 16 && index <= 24) omni0_info_.R[index-16] = atof(data.c_str());
+//      if(index >= 25 && index <= 36) omni0_info_.P[index-25] = atof(data.c_str());
+//      if(index == 37) omni0_info_.binning_x = atof(data.c_str());
+//      if(index == 38){
+//          omni0_info_.binning_y = atof(data.c_str());
+//          omni_active_ = true;
+//          break;
+//      }
+//      index++;
+//  }
+//  in.close();
 
-  in.open((data_folder_path_+"/omni/cam1_info.csv").c_str());
-  getline(in, line);
-  stringstream sep_omni1(line);
-  index = 0;
-  omni1_info_.D.clear();
-  while (getline(sep_omni1, data, ',')) {
-      if(index == 0) omni1_info_.height = stod(data);
-      if(index == 1) omni1_info_.width = stod(data);
-      if(index >= 2 && index <= 6) omni1_info_.D.push_back(atof(data.c_str()));
-      if(index >= 7 && index <= 15) omni1_info_.K[index-7] = atof(data.c_str());
-      if(index >= 16 && index <= 24) omni1_info_.R[index-16] = atof(data.c_str());
-      if(index >= 25 && index <= 36) omni1_info_.P[index-25] = atof(data.c_str());
-      if(index == 37) omni1_info_.binning_x = atof(data.c_str());
-      if(index == 38){
-          omni1_info_.binning_y = atof(data.c_str());
-          break;
-      }
-      index++;
-  }
-  in.close();
+//  in.open((data_folder_path_+"/omni/cam1_info.csv").c_str());
+//  getline(in, line);
+//  stringstream sep_omni1(line);
+//  index = 0;
+//  omni1_info_.D.clear();
+//  while (getline(sep_omni1, data, ',')) {
+//      if(index == 0) omni1_info_.height = stod(data);
+//      if(index == 1) omni1_info_.width = stod(data);
+//      if(index >= 2 && index <= 6) omni1_info_.D.push_back(atof(data.c_str()));
+//      if(index >= 7 && index <= 15) omni1_info_.K[index-7] = atof(data.c_str());
+//      if(index >= 16 && index <= 24) omni1_info_.R[index-16] = atof(data.c_str());
+//      if(index >= 25 && index <= 36) omni1_info_.P[index-25] = atof(data.c_str());
+//      if(index == 37) omni1_info_.binning_x = atof(data.c_str());
+//      if(index == 38){
+//          omni1_info_.binning_y = atof(data.c_str());
+//          break;
+//      }
+//      index++;
+//  }
+//  in.close();
 
-  in.open((data_folder_path_+"/omni/cam2_info.csv").c_str());
-  getline(in, line);
-  stringstream sep_omni2(line);
-  index = 0;
-  omni2_info_.D.clear();
-  while (getline(sep_omni2, data, ',')) {
-      if(index == 0) omni2_info_.height = stod(data);
-      if(index == 1) omni2_info_.width = stod(data);
-      if(index >= 2 && index <= 6) omni2_info_.D.push_back(atof(data.c_str()));
-      if(index >= 7 && index <= 15) omni2_info_.K[index-7] = atof(data.c_str());
-      if(index >= 16 && index <= 24) omni2_info_.R[index-16] = atof(data.c_str());
-      if(index >= 25 && index <= 36) omni2_info_.P[index-25] = atof(data.c_str());
-      if(index == 37) omni2_info_.binning_x = atof(data.c_str());
-      if(index == 38){
-          omni2_info_.binning_y = atof(data.c_str());
-          break;
-      }
-      index++;
-  }
-  in.close();
+//  in.open((data_folder_path_+"/omni/cam2_info.csv").c_str());
+//  getline(in, line);
+//  stringstream sep_omni2(line);
+//  index = 0;
+//  omni2_info_.D.clear();
+//  while (getline(sep_omni2, data, ',')) {
+//      if(index == 0) omni2_info_.height = stod(data);
+//      if(index == 1) omni2_info_.width = stod(data);
+//      if(index >= 2 && index <= 6) omni2_info_.D.push_back(atof(data.c_str()));
+//      if(index >= 7 && index <= 15) omni2_info_.K[index-7] = atof(data.c_str());
+//      if(index >= 16 && index <= 24) omni2_info_.R[index-16] = atof(data.c_str());
+//      if(index >= 25 && index <= 36) omni2_info_.P[index-25] = atof(data.c_str());
+//      if(index == 37) omni2_info_.binning_x = atof(data.c_str());
+//      if(index == 38){
+//          omni2_info_.binning_y = atof(data.c_str());
+//          break;
+//      }
+//      index++;
+//  }
+//  in.close();
 
-  in.open((data_folder_path_+"/omni/cam3_info.csv").c_str());
-  getline(in, line);
-  stringstream sep_omni3(line);
-  index = 0;
-  omni3_info_.D.clear();
-  while (getline(sep_omni3, data, ',')) {
-      if(index == 0) omni3_info_.height = stod(data);
-      if(index == 1) omni3_info_.width = stod(data);
-      if(index >= 2 && index <= 6) omni3_info_.D.push_back(atof(data.c_str()));
-      if(index >= 7 && index <= 15) omni3_info_.K[index-7] = atof(data.c_str());
-      if(index >= 16 && index <= 24) omni3_info_.R[index-16] = atof(data.c_str());
-      if(index >= 25 && index <= 36) omni3_info_.P[index-25] = atof(data.c_str());
-      if(index == 37) omni3_info_.binning_x = atof(data.c_str());
-      if(index == 38){
-          omni3_info_.binning_y = atof(data.c_str());
-          break;
-      }
-      index++;
-  }
-  in.close();
+//  in.open((data_folder_path_+"/omni/cam3_info.csv").c_str());
+//  getline(in, line);
+//  stringstream sep_omni3(line);
+//  index = 0;
+//  omni3_info_.D.clear();
+//  while (getline(sep_omni3, data, ',')) {
+//      if(index == 0) omni3_info_.height = stod(data);
+//      if(index == 1) omni3_info_.width = stod(data);
+//      if(index >= 2 && index <= 6) omni3_info_.D.push_back(atof(data.c_str()));
+//      if(index >= 7 && index <= 15) omni3_info_.K[index-7] = atof(data.c_str());
+//      if(index >= 16 && index <= 24) omni3_info_.R[index-16] = atof(data.c_str());
+//      if(index >= 25 && index <= 36) omni3_info_.P[index-25] = atof(data.c_str());
+//      if(index == 37) omni3_info_.binning_x = atof(data.c_str());
+//      if(index == 38){
+//          omni3_info_.binning_y = atof(data.c_str());
+//          break;
+//      }
+//      index++;
+//  }
+//  in.close();
 
-  in.open((data_folder_path_+"/omni/cam4_info.csv").c_str());
-  getline(in, line);
-  stringstream sep_omni4(line);
-  index = 0;
-  omni4_info_.D.clear();
-  while (getline(sep_omni4, data, ',')) {
-      if(index == 0) omni4_info_.height = stod(data);
-      if(index == 1) omni4_info_.width = stod(data);
-      if(index >= 2 && index <= 6) omni4_info_.D.push_back(atof(data.c_str()));
-      if(index >= 7 && index <= 15) omni4_info_.K[index-7] = atof(data.c_str());
-      if(index >= 16 && index <= 24) omni4_info_.R[index-16] = atof(data.c_str());
-      if(index >= 25 && index <= 36) omni4_info_.P[index-25] = atof(data.c_str());
-      if(index == 37) omni4_info_.binning_x = atof(data.c_str());
-      if(index == 38){
-          omni4_info_.binning_y = atof(data.c_str());
-          break;
-      }
-      index++;
-  }
-  in.close();
+//  in.open((data_folder_path_+"/omni/cam4_info.csv").c_str());
+//  getline(in, line);
+//  stringstream sep_omni4(line);
+//  index = 0;
+//  omni4_info_.D.clear();
+//  while (getline(sep_omni4, data, ',')) {
+//      if(index == 0) omni4_info_.height = stod(data);
+//      if(index == 1) omni4_info_.width = stod(data);
+//      if(index >= 2 && index <= 6) omni4_info_.D.push_back(atof(data.c_str()));
+//      if(index >= 7 && index <= 15) omni4_info_.K[index-7] = atof(data.c_str());
+//      if(index >= 16 && index <= 24) omni4_info_.R[index-16] = atof(data.c_str());
+//      if(index >= 25 && index <= 36) omni4_info_.P[index-25] = atof(data.c_str());
+//      if(index == 37) omni4_info_.binning_x = atof(data.c_str());
+//      if(index == 38){
+//          omni4_info_.binning_y = atof(data.c_str());
+//          break;
+//      }
+//      index++;
+//  }
+//  in.close();
 
   data_stamp_thread_.active_ = true;
   altimter_thread_.active_ = true;
