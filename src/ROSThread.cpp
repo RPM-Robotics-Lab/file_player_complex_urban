@@ -12,7 +12,7 @@ ROSThread::ROSThread(QObject *parent, QMutex *th_mutex) :
   play_rate_ = 1.0;
   loop_flag_ = false;
   stop_skip_flag_ = true;
-  stereo_active_ = false;
+  stereo_active_ = true;
   omni_active_ = false;
   search_bound_ = 10;
 }
@@ -1141,6 +1141,8 @@ void ROSThread::StereoThread()
     while(!stereo_thread_.data_queue_.empty()){
       auto data = stereo_thread_.pop();
       //process
+
+      cout << "here" << endl;
 
       if(stereo_file_list_.size() == 0) continue;
 
