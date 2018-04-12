@@ -1141,6 +1141,9 @@ void ROSThread::StereoThread()
     while(!stereo_thread_.data_queue_.empty()){
       auto data = stereo_thread_.pop();
       //process
+
+      if(stereo_file_list_.size() == 0) continue;
+
       //publish
       if(to_string(data)+".png" == stereo_left_next_img_.first){
         cv_bridge::CvImage left_out_msg;
