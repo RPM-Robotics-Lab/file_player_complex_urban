@@ -377,9 +377,46 @@ void ROSThread::Ready()
 
   //load camera info
 
+
+
 //  string line;
 //  ifstream in;
 //  string data;
+
+    string left_yaml_file_path = "file://" + data_folder_path_ + "/calibration/left.yaml";
+    string right_yaml_file_path = "file://" + data_folder_path_ + "/calibration/right.yaml";
+    camera_info_manager::CameraInfoManager c_info(nh_, "/stereo/left", left_yaml_file_path);
+//    camera_info_manager::CameraInfoManager c_info2(nh_, "/stereo/right", right_yaml_file_path);
+
+    if(c_info.validateURL(left_yaml_file_path) && c_info.validateURL(right_yaml_file_path)){
+        c_info.loadCameraInfo(left_yaml_file_path);
+        cout << "Success to load camera info" << endl;
+        stereo_left_info_ = c_info.getCameraInfo();
+
+        c_info.setCameraName("/stereo/right");
+        c_info.loadCameraInfo(right_yaml_file_path);
+        stereo_right_info_ = c_info.getCameraInfo();
+    }else{
+        cout << "Fail to load camera info" << endl;
+    }
+
+
+
+
+
+
+
+
+//  string right_yaml_file_path = "file://" + data_folder_path_ + "/calibration/right.yaml";
+//  camera_info_manager::CameraInfoManager right_c_info(nh_, "stereo/right", right_yaml_file_path);
+
+//  if(right_c_info.validateURL(right_yaml_file_path)){
+//      right_c_info.loadCameraInfo(right_yaml_file_path);
+//      cout << "Success to load camera info" << endl;
+//  }else{
+//      cout << "Fail to load camera info" << endl;
+//  }
+
 
 //  in.open((data_folder_path_+"/image/stereo_left_info.csv").c_str());
 //  getline(in, line);
@@ -1158,9 +1195,9 @@ void ROSThread::StereoThread()
         right_out_msg.image    = stereo_right_next_img_.second;
 
         stereo_left_info_.header.stamp.fromNSec(data);
-        stereo_left_info_.header.frame_id = "/stereo/left";
+//        stereo_left_info_.header.frame_id = "/stereo/left";
         stereo_right_info_.header.stamp.fromNSec(data);
-        stereo_right_info_.header.frame_id = "/stereo/right";
+//        stereo_right_info_.header.frame_id = "/stereo/right";
 
         stereo_left_pub_.publish(left_out_msg.toImageMsg());
         stereo_right_pub_.publish(right_out_msg.toImageMsg());
@@ -1193,9 +1230,9 @@ void ROSThread::StereoThread()
             right_out_msg.image    = current_right_image;
 
             stereo_left_info_.header.stamp.fromNSec(data);
-            stereo_left_info_.header.frame_id = "/stereo/left";
+//            stereo_left_info_.header.frame_id = "/stereo/left";
             stereo_right_info_.header.stamp.fromNSec(data);
-            stereo_right_info_.header.frame_id = "/stereo/right";
+//            stereo_right_info_.header.frame_id = "/stereo/right";
 
             stereo_left_pub_.publish(left_out_msg.toImageMsg());
             stereo_right_pub_.publish(right_out_msg.toImageMsg());

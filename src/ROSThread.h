@@ -29,6 +29,8 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/LaserScan.h>
 
+
+#include <camera_info_manager/camera_info_manager.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h>
 #include <std_srvs/SetBool.h>
@@ -38,6 +40,7 @@
 #include <sensor_msgs/NavSatFix.h>
 #include <sensor_msgs/LaserScan.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/SetCameraInfo.h>
 #include <irp_sen_msgs/vrs.h>
 #include <irp_sen_msgs/altimeter.h>
 #include <irp_sen_msgs/encoder.h>
@@ -72,6 +75,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
 
 
 using namespace std;
