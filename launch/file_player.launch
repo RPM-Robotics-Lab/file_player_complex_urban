@@ -6,7 +6,7 @@
 
     <arg name="camera" default="stereo"/>
     <arg name="frame_id" default="$(arg camera)"/>
-    <arg name="proc" default="true"/>
+    <arg name="proc" default="false"/>
 
     <!-- Proc -->
     <node if="$(arg proc)"
