@@ -98,19 +98,19 @@ void ROSThread::ros_initialize(ros::NodeHandle &n)
 
   stereo_left_pub_ = nh_.advertise<sensor_msgs::Image>("/stereo/left/image_raw", 10);
   stereo_right_pub_ = nh_.advertise<sensor_msgs::Image>("/stereo/right/image_raw", 10);
-  omni0_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image0", 10);
-  omni1_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image1", 10);
-  omni2_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image2", 10);
-  omni3_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image3", 10);
-  omni4_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image4", 10);
+//  omni0_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image0", 10);
+//  omni1_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image1", 10);
+//  omni2_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image2", 10);
+//  omni3_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image3", 10);
+//  omni4_pub_ = nh_.advertise<sensor_msgs::Image>("/occam_node/image4", 10);
 
   stereo_left_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/stereo/left/camera_info", 10);
   stereo_right_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/stereo/right/camera_info", 10);
-  omni0_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image0/camera_info", 10);
-  omni1_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image1/camera_info", 10);
-  omni2_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image2/camera_info", 10);
-  omni3_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image3/camera_info", 10);
-  omni4_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image4/camera_info", 10);
+//  omni0_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image0/camera_info", 10);
+//  omni1_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image1/camera_info", 10);
+//  omni2_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image2/camera_info", 10);
+//  omni3_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image3/camera_info", 10);
+//  omni4_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image4/camera_info", 10);
 
 }
 
@@ -377,30 +377,29 @@ void ROSThread::Ready()
 
   //load camera info
 
+  left_camera_nh_ = ros::NodeHandle(nh_,"left");
+  right_camera_nh_ = ros::NodeHandle(nh_,"right");
+
+  left_cinfo_ = boost::shared_ptr<camera_info_manager::CameraInfoManager>(new camera_info_manager::CameraInfoManager(left_camera_nh_,"/stereo/left"));
+  right_cinfo_ = boost::shared_ptr<camera_info_manager::CameraInfoManager>(new camera_info_manager::CameraInfoManager(right_camera_nh_,"/stereo/right"));
 
 
-//  string line;
-//  ifstream in;
-//  string data;
-
-    string left_yaml_file_path = "file://" + data_folder_path_ + "/calibration/left.yaml";
-    string right_yaml_file_path = "file://" + data_folder_path_ + "/calibration/right.yaml";
-    camera_info_manager::CameraInfoManager c_info(nh_, "/stereo/left", left_yaml_file_path);
-//    camera_info_manager::CameraInfoManager c_info2(nh_, "/stereo/right", right_yaml_file_path);
-
-    if(c_info.validateURL(left_yaml_file_path) && c_info.validateURL(right_yaml_file_path)){
-        c_info.loadCameraInfo(left_yaml_file_path);
-        cout << "Success to load camera info" << endl;
-        stereo_left_info_ = c_info.getCameraInfo();
-
-        c_info.setCameraName("/stereo/right");
-        c_info.loadCameraInfo(right_yaml_file_path);
-        stereo_right_info_ = c_info.getCameraInfo();
-    }else{
-        cout << "Fail to load camera info" << endl;
-    }
+  string left_yaml_file_path = "file://" + data_folder_path_ + "/calibration/left.yaml";
+  string right_yaml_file_path = "file://" + data_folder_path_ + "/calibration/right.yaml";
 
 
+  if(left_cinfo_->validateURL(left_yaml_file_path)){
+      left_cinfo_->loadCameraInfo(left_yaml_file_path);
+//      cout << "Success to load camera info" << endl;
+      stereo_left_info_ = left_cinfo_->getCameraInfo();
+  }
+
+
+  if(right_cinfo_->validateURL(right_yaml_file_path)){
+      right_cinfo_->loadCameraInfo(right_yaml_file_path);
+//      cout << "Success to load camera info" << endl;
+      stereo_right_info_ = right_cinfo_->getCameraInfo();
+  }
 
 
 
@@ -1195,9 +1194,9 @@ void ROSThread::StereoThread()
         right_out_msg.image    = stereo_right_next_img_.second;
 
         stereo_left_info_.header.stamp.fromNSec(data);
-//        stereo_left_info_.header.frame_id = "/stereo/left";
+        stereo_left_info_.header.frame_id = "/stereo/left";
         stereo_right_info_.header.stamp.fromNSec(data);
-//        stereo_right_info_.header.frame_id = "/stereo/right";
+        stereo_right_info_.header.frame_id = "/stereo/right";
 
         stereo_left_pub_.publish(left_out_msg.toImageMsg());
         stereo_right_pub_.publish(right_out_msg.toImageMsg());
@@ -1230,9 +1229,9 @@ void ROSThread::StereoThread()
             right_out_msg.image    = current_right_image;
 
             stereo_left_info_.header.stamp.fromNSec(data);
-//            stereo_left_info_.header.frame_id = "/stereo/left";
+            stereo_left_info_.header.frame_id = "/stereo/left";
             stereo_right_info_.header.stamp.fromNSec(data);
-//            stereo_right_info_.header.frame_id = "/stereo/right";
+            stereo_right_info_.header.frame_id = "/stereo/right";
 
             stereo_left_pub_.publish(left_out_msg.toImageMsg());
             stereo_right_pub_.publish(right_out_msg.toImageMsg());
@@ -1323,17 +1322,17 @@ void ROSThread::OmniThread()
         omni4_info_.header.stamp.fromNSec(data);
         omni4_info_.header.frame_id = "occam_info";
 
-        omni0_pub_.publish(onmi0_out_msg.toImageMsg());
-        omni1_pub_.publish(onmi1_out_msg.toImageMsg());
-        omni2_pub_.publish(onmi2_out_msg.toImageMsg());
-        omni3_pub_.publish(onmi3_out_msg.toImageMsg());
-        omni4_pub_.publish(onmi4_out_msg.toImageMsg());
+//        omni0_pub_.publish(onmi0_out_msg.toImageMsg());
+//        omni1_pub_.publish(onmi1_out_msg.toImageMsg());
+//        omni2_pub_.publish(onmi2_out_msg.toImageMsg());
+//        omni3_pub_.publish(onmi3_out_msg.toImageMsg());
+//        omni4_pub_.publish(onmi4_out_msg.toImageMsg());
 
-        omni0_info_pub_.publish(omni0_info_);
-        omni1_info_pub_.publish(omni1_info_);
-        omni2_info_pub_.publish(omni2_info_);
-        omni3_info_pub_.publish(omni3_info_);
-        omni4_info_pub_.publish(omni4_info_);
+//        omni0_info_pub_.publish(omni0_info_);
+//        omni1_info_pub_.publish(omni1_info_);
+//        omni2_info_pub_.publish(omni2_info_);
+//        omni3_info_pub_.publish(omni3_info_);
+//        omni4_info_pub_.publish(omni4_info_);
 
       }else{
         cout << "Re-load omni image from image path" << endl;
@@ -1401,17 +1400,17 @@ void ROSThread::OmniThread()
             omni4_info_.header.stamp.fromNSec(data);
             omni4_info_.header.frame_id = "occam_info";
 
-            omni0_pub_.publish(onmi0_out_msg.toImageMsg());
-            omni1_pub_.publish(onmi1_out_msg.toImageMsg());
-            omni2_pub_.publish(onmi2_out_msg.toImageMsg());
-            omni3_pub_.publish(onmi3_out_msg.toImageMsg());
-            omni4_pub_.publish(onmi4_out_msg.toImageMsg());
+//            omni0_pub_.publish(onmi0_out_msg.toImageMsg());
+//            omni1_pub_.publish(onmi1_out_msg.toImageMsg());
+//            omni2_pub_.publish(onmi2_out_msg.toImageMsg());
+//            omni3_pub_.publish(onmi3_out_msg.toImageMsg());
+//            omni4_pub_.publish(onmi4_out_msg.toImageMsg());
 
-            omni0_info_pub_.publish(omni0_info_);
-            omni1_info_pub_.publish(omni1_info_);
-            omni2_info_pub_.publish(omni2_info_);
-            omni3_info_pub_.publish(omni3_info_);
-            omni4_info_pub_.publish(omni4_info_);
+//            omni0_info_pub_.publish(omni0_info_);
+//            omni1_info_pub_.publish(omni1_info_);
+//            omni2_info_pub_.publish(omni2_info_);
+//            omni3_info_pub_.publish(omni3_info_);
+//            omni4_info_pub_.publish(omni4_info_);
         }
         previous_img_index = 0;
 

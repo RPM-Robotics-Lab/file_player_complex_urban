@@ -92,6 +92,12 @@ public:
     void run();
     QMutex *mutex_;
     ros::NodeHandle nh_;
+    ros::NodeHandle left_camera_nh_;
+    ros::NodeHandle right_camera_nh_;
+
+    boost::shared_ptr<camera_info_manager::CameraInfoManager> left_cinfo_;
+    boost::shared_ptr<camera_info_manager::CameraInfoManager> right_cinfo_;
+
 
     bool play_flag_;
     bool pause_flag_;
@@ -128,19 +134,19 @@ private:
 
     ros::Publisher stereo_left_pub_;
     ros::Publisher stereo_right_pub_;
-    ros::Publisher omni0_pub_;
-    ros::Publisher omni1_pub_;
-    ros::Publisher omni2_pub_;
-    ros::Publisher omni3_pub_;
-    ros::Publisher omni4_pub_;
+//    ros::Publisher omni0_pub_;
+//    ros::Publisher omni1_pub_;
+//    ros::Publisher omni2_pub_;
+//    ros::Publisher omni3_pub_;
+//    ros::Publisher omni4_pub_;
 
     ros::Publisher stereo_left_info_pub_;
     ros::Publisher stereo_right_info_pub_;
-    ros::Publisher omni0_info_pub_;
-    ros::Publisher omni1_info_pub_;
-    ros::Publisher omni2_info_pub_;
-    ros::Publisher omni3_info_pub_;
-    ros::Publisher omni4_info_pub_;
+//    ros::Publisher omni0_info_pub_;
+//    ros::Publisher omni1_info_pub_;
+//    ros::Publisher omni2_info_pub_;
+//    ros::Publisher omni3_info_pub_;
+//    ros::Publisher omni4_info_pub_;
 
     multimap<int64_t, string>                    data_stamp_;
     map<int64_t, irp_sen_msgs::altimeter>   altimeter_data_;
