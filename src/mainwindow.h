@@ -56,8 +56,10 @@ private slots:
   void PlaySpeedChange(double value);
   void LoopFlagChange(int value);
   void StopSkipFlagChange(int value);
+  void AutoStartFlagChange(int value);
   void SetStamp(quint64 stamp);
   void SliderValueChange(int value);
+  void SliderPressed();
   void SliderValueApply();
 
 signals:
@@ -72,6 +74,8 @@ private:
   bool loop_flag_;
   bool stop_skip_flag_;
   int slider_value_;
+
+  int slider_checker_;
 
 };
 

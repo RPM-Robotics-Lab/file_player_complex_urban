@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent) :
   ui_->setupUi(this);
   my_ros_->start();
 
+  slider_checker_ = false;
   play_flag_ = false;
   pause_flag_ = false;
   loop_flag_ = false;
@@ -40,7 +41,14 @@ MainWindow::MainWindow(QWidget *parent) :
   }else{
     ui_->checkBox_2->setCheckState(Qt::Unchecked);
   }
+  connect(ui_->checkBox_3, SIGNAL(stateChanged(int)), this, SLOT (AutoStartFlagChange(int)));
+  if(my_ros_->auto_start_flag_ == true){
+    ui_->checkBox_3->setCheckState(Qt::Checked);
+  }else{
+    ui_->checkBox_3->setCheckState(Qt::Unchecked);
+  }
 
+  connect(ui_->horizontalSlider, SIGNAL(sliderPressed()), this, SLOT(SliderPressed()));
   connect(ui_->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(SliderValueChange(int)));
   connect(ui_->horizontalSlider, SIGNAL(sliderReleased()), this, SLOT(SliderValueApply()));
 
@@ -99,6 +107,11 @@ void MainWindow::FilePathSet()
 void MainWindow::SetStamp(quint64 stamp)
 {
   this->ui_->label_2->setText(QString::number(stamp));
+
+  //set slide bar
+  if(slider_checker_ == false){
+    ui_->horizontalSlider->setValue(static_cast<int>(static_cast<float>(stamp - my_ros_->initial_data_stamp_)/static_cast<float>(my_ros_->last_data_stamp_ - my_ros_->initial_data_stamp_)*10000));
+  }
 }
 
 void MainWindow::Play()
@@ -158,15 +171,26 @@ void MainWindow::StopSkipFlagChange(int value)
     my_ros_->stop_skip_flag_ = false;
   }
 }
+void MainWindow::AutoStartFlagChange(int value)
+{
+  if(value == 2){
+    my_ros_->auto_start_flag_ = true;
+  }else if(value == 0){
+    my_ros_->auto_start_flag_ = false;
+  }
+}
 void MainWindow::SliderValueChange(int value)
 {
-
-//  cout << "Slide value: " << value << endl;
   slider_value_ = value;
-
 }
+
+void MainWindow::SliderPressed()
+{
+  slider_checker_ = true;
+}
+
 void MainWindow::SliderValueApply()
 {
-  cout << "Slide value apply!" << endl;
   my_ros_->ResetProcessStamp(slider_value_);
+  slider_checker_ = false;
 }

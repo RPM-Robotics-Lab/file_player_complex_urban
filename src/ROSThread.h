@@ -98,6 +98,11 @@ public:
     boost::shared_ptr<camera_info_manager::CameraInfoManager> left_cinfo_;
     boost::shared_ptr<camera_info_manager::CameraInfoManager> right_cinfo_;
 
+    int64_t initial_data_stamp_;
+    int64_t last_data_stamp_;
+
+    bool auto_start_flag_;
+    int stamp_show_count_;
 
     bool play_flag_;
     bool pause_flag_;
@@ -198,8 +203,6 @@ private:
     vector<string> stereo_file_list_;
     vector<string> omni_file_list_;
 
-    int64_t initial_data_stamp_;
-    int64_t last_data_stamp_;
 
 
     ros::Timer timer_;

@@ -193,6 +193,13 @@ QFrame#line,#line_2,#line_3,#line_4,#line_5,#line_6,#line_7,#line_8,#line_9,#lin
        </widget>
       </item>
       <item>
+       <widget class="QCheckBox" name="checkBox_3">
+        <property name="text">
+         <string>Auto start</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>

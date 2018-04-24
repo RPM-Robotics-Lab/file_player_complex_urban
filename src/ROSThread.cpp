@@ -16,6 +16,8 @@ ROSThread::ROSThread(QObject *parent, QMutex *th_mutex) :
   omni_active_ = false;
   search_bound_ = 10;
   reset_process_stamp_flag_ = false;
+  auto_start_flag_ = true;
+  stamp_show_count_ = 0;
 
 }
 
@@ -685,8 +687,12 @@ void ROSThread::DataStampThread()
         omni_thread_.push(stamp);
         omni_thread_.cv_.notify_all();
     }
+    stamp_show_count_++;
+    if(stamp_show_count_ > 100){
+      stamp_show_count_ = 0;
+      emit StampShow(stamp);
+    }
 
-    emit StampShow(stamp);
     if(loop_flag_ == true && iter == prev(data_stamp_.end(),1)){
         iter = data_stamp_.begin();
         stop_region_iter = stop_period_.begin();
@@ -860,7 +866,7 @@ void ROSThread::VelodyneLeftThread()
         velodyne_left_pub_.publish(velodyne_left_next_.second);
 
       }else{
-        cout << "Re-load left velodyne from path" << endl;
+//        cout << "Re-load left velodyne from path" << endl;
         //load current data
         pcl::PointCloud<pcl::PointXYZI> cloud;
         cloud.clear();
@@ -937,7 +943,7 @@ void ROSThread::VelodyneRightThread()
         velodyne_right_pub_.publish(velodyne_right_next_.second);
 
       }else{
-        cout << "Re-load right velodyne from path" << endl;
+//        cout << "Re-load right velodyne from path" << endl;
         //load current data
         pcl::PointCloud<pcl::PointXYZI> cloud;
         cloud.clear();
@@ -1016,7 +1022,7 @@ void ROSThread::SickBackThread()
         sick_back_pub_.publish(sick_back_next_.second);
 
       }else{
-        cout << "Re-load back sick from path" << endl;
+//        cout << "Re-load back sick from path" << endl;
         //load current data
         irp_sen_msgs::LaserScanArray publish_data;
         sensor_msgs::LaserScan scan_data;
@@ -1112,7 +1118,7 @@ void ROSThread::SickMiddleThread()
         sick_middle_pub_.publish(sick_middle_next_.second);
 
       }else{
-        cout << "Re-load middle sick from path" << endl;
+//        cout << "Re-load middle sick from path" << endl;
         //load current data
         irp_sen_msgs::LaserScanArray publish_data;
         sensor_msgs::LaserScan scan_data;
@@ -1230,7 +1236,7 @@ void ROSThread::StereoThread()
         stereo_right_info_pub_.publish(stereo_right_info_);
 
       }else{
-        cout << "Re-load stereo image from image path" << endl;
+//        cout << "Re-load stereo image from image path" << endl;
 
         string current_stereo_left_name = data_folder_path_ + "/image/stereo_left" +"/"+ to_string(data)+".png";
         string current_stereo_right_name = data_folder_path_ + "/image/stereo_right" +"/"+ to_string(data)+".png";
@@ -1360,7 +1366,7 @@ void ROSThread::OmniThread()
 //        omni4_info_pub_.publish(omni4_info_);
 
       }else{
-        cout << "Re-load omni image from image path" << endl;
+//        cout << "Re-load omni image from image path" << endl;
         string current_omni0_name = data_folder_path_ + "/omni/cam0" +"/"+ to_string(data)+".jpeg";
         string current_omni1_name = data_folder_path_ + "/omni/cam1" +"/"+ to_string(data)+".jpeg";
         string current_omni2_name = data_folder_path_ + "/omni/cam2" +"/"+ to_string(data)+".jpeg";
@@ -1505,10 +1511,12 @@ int ROSThread::GetDirList(string dir, vector<string> &files)
 
 void ROSThread::FilePlayerStart(const std_msgs::BoolConstPtr& msg)
 {
-  cout << "File player auto start" << endl;
-  usleep(1000000);
-  play_flag_ = false;
-  emit StartSignal();
+  if(auto_start_flag_ == true){
+    cout << "File player auto start" << endl;
+    usleep(1000000);
+    play_flag_ = false;
+    emit StartSignal();
+  }
 }
 
 void ROSThread::FilePlayerStop(const std_msgs::BoolConstPtr& msg)
