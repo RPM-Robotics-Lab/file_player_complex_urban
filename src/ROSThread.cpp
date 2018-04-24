@@ -15,6 +15,8 @@ ROSThread::ROSThread(QObject *parent, QMutex *th_mutex) :
   stereo_active_ = true;
   omni_active_ = false;
   search_bound_ = 10;
+  reset_process_stamp_flag_ = false;
+
 }
 
 ROSThread::~ROSThread()
@@ -190,6 +192,7 @@ void ROSThread::Ready()
   fclose(fp);
 
   initial_data_stamp_ = data_stamp_.begin()->first - 1;
+  last_data_stamp_ = prev(data_stamp_.end(),1)->first - 1;
 
   //Read altimeter data
   fp = fopen((data_folder_path_+"/sensor_data/altimeter.csv").c_str(),"r");
@@ -241,6 +244,7 @@ void ROSThread::Ready()
     pre_left_count = left_count;
     pre_right_count = right_count;
   }
+
 //  cout << stop_period_.size() << endl;
   cout << "Encoder data are loaded" << endl;
   fclose(fp);
@@ -602,6 +606,8 @@ void ROSThread::DataStampThread()
   for(auto iter = data_stamp_.begin() ; iter != data_stamp_.end() ; iter ++){
     auto stamp = iter->first;
 
+
+
     while((stamp > (initial_data_stamp_+processed_stamp_))&&(data_stamp_thread_.active_ == true)){
       if(processed_stamp_ == 0){
           iter = data_stamp_.begin();
@@ -609,7 +615,24 @@ void ROSThread::DataStampThread()
           stamp = iter->first;
       }
       usleep(1);
+      if(reset_process_stamp_flag_ == true) break;
+      //wait for data publish
     }
+
+    if(reset_process_stamp_flag_ == true){
+      auto target_stamp = processed_stamp_ + initial_data_stamp_;
+      //set iter
+      iter = data_stamp_.lower_bound(target_stamp);
+      iter = prev(iter,1);
+      //set stop region order
+      auto new_stamp = iter->first;
+      stop_region_iter = stop_period_.upper_bound(new_stamp);
+
+      reset_process_stamp_flag_ = false;
+      continue;
+    }
+
+
     //check whether stop region or not
     if(stamp == stop_region_iter->first){
       if(stop_skip_flag_ == true){
@@ -678,6 +701,8 @@ void ROSThread::DataStampThread()
             usleep(10000);
         }
     }
+
+
   }
   cout << "Data publish complete" << endl;
 
@@ -1491,4 +1516,12 @@ void ROSThread::FilePlayerStop(const std_msgs::BoolConstPtr& msg)
   cout << "File player auto stop" << endl;
   play_flag_ = true;
   emit StartSignal();
+}
+void ROSThread::ResetProcessStamp(int position)
+{
+  if(position > 0 && position < 10000){
+    processed_stamp_ = static_cast<int64_t>(static_cast<float>(last_data_stamp_ - initial_data_stamp_)*static_cast<float>(position)/static_cast<float>(10000));
+    reset_process_stamp_flag_ = true;
+  }
+
 }

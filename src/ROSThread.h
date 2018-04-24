@@ -106,6 +106,7 @@ public:
     double play_rate_;
     string data_folder_path_;
     void Ready();
+    void ResetProcessStamp(int position);
 
 signals:
     void StampShow(quint64 stamp);
@@ -198,12 +199,15 @@ private:
     vector<string> omni_file_list_;
 
     int64_t initial_data_stamp_;
+    int64_t last_data_stamp_;
 
 
     ros::Timer timer_;
     void TimerCallback(const ros::TimerEvent&);
     int64_t processed_stamp_;
     int64_t pre_timer_stamp_;
+
+    bool reset_process_stamp_flag_;
 
     pair<string,sensor_msgs::PointCloud2> velodyne_left_next_;
     pair<string,sensor_msgs::PointCloud2> velodyne_right_next_;

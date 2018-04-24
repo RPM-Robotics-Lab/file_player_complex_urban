@@ -57,6 +57,8 @@ private slots:
   void LoopFlagChange(int value);
   void StopSkipFlagChange(int value);
   void SetStamp(quint64 stamp);
+  void SliderValueChange(int value);
+  void SliderValueApply();
 
 signals:
   void setThreadFinished(bool);
@@ -69,6 +71,7 @@ private:
   bool pause_flag_;
   bool loop_flag_;
   bool stop_skip_flag_;
+  int slider_value_;
 
 };
 

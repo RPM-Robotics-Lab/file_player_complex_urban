@@ -41,6 +41,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui_->checkBox_2->setCheckState(Qt::Unchecked);
   }
 
+  connect(ui_->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(SliderValueChange(int)));
+  connect(ui_->horizontalSlider, SIGNAL(sliderReleased()), this, SLOT(SliderValueApply()));
+
+  ui_->horizontalSlider->setRange(0,10000);
+  ui_->horizontalSlider->setValue(0);
+  slider_value_ = 0;
+
 }
 
 MainWindow::~MainWindow()
@@ -150,4 +157,16 @@ void MainWindow::StopSkipFlagChange(int value)
     stop_skip_flag_ = false;
     my_ros_->stop_skip_flag_ = false;
   }
+}
+void MainWindow::SliderValueChange(int value)
+{
+
+//  cout << "Slide value: " << value << endl;
+  slider_value_ = value;
+
+}
+void MainWindow::SliderValueApply()
+{
+  cout << "Slide value apply!" << endl;
+  my_ros_->ResetProcessStamp(slider_value_);
 }

@@ -230,6 +230,25 @@ QFrame#line,#line_2,#line_3,#line_4,#line_5,#line_6,#line_7,#line_8,#line_9,#lin
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
+       <widget class="QSlider" name="horizontalSlider">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>521</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="horizontalSpacer_2">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -239,7 +258,7 @@ QFrame#line,#line_2,#line_3,#line_4,#line_5,#line_6,#line_7,#line_8,#line_9,#lin
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>3738</width>
+          <width>1000</width>
           <height>20</height>
          </size>
         </property>
