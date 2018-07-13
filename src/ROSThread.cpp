@@ -269,7 +269,7 @@ void ROSThread::Ready()
 
   //Read gps data
   fp = fopen((data_folder_path_+"/sensor_data/gps.csv").c_str(),"r");
-  double latitude, longitude, altitude;
+  double latitude, longitude, altitude, altitude_orthometric;
   double cov[9];
   sensor_msgs::NavSatFix gps_data;
   gps_data_.clear();
@@ -292,31 +292,64 @@ void ROSThread::Ready()
   char GNVTG_mode;
   irp_sen_msgs::vrs vrs_data;
   vrs_data_.clear();
-  while(fscanf(fp,"%ld,%lf,%lf,%lf,%lf,%lf,%d,%d,%lf,%lf,%lf,%lf,%d,%lf,%lf,%lf,%c\n",&stamp,&latitude,&longitude,&x_coordinate,
+  while(1){
+    int length = fscanf(fp,"%ld,%lf,%lf,%lf,%lf,%lf,%d,%d,%lf,%lf,%lf,%lf,%d,%lf,%lf,%lf,%c,%lf\n",&stamp,&latitude,&longitude,&x_coordinate,
                &y_coordinate,&altitude,&fix_state,&number_of_sat,&horizental_precision,&lat_std,&lon_std,&altitude_std,
-               &heading_valid,&heading_magnet,&speed_knot,&speed_km,&GNVTG_mode) == 17){
-    vrs_data.header.stamp.fromNSec(stamp);
-    vrs_data.header.frame_id = "vrs_gps";
-    vrs_data.latitude = latitude;
-    vrs_data.longitude = longitude;
-    vrs_data.x_coordinate = x_coordinate;
-    vrs_data.y_coordinate = y_coordinate;
-    vrs_data.altitude = altitude;
-    vrs_data.fix_state = fix_state;
-    if(fix_state == 1) vrs_data.fix_state_str = "normal";
-    if(fix_state == 4) vrs_data.fix_state_str = "fix";
-    if(fix_state == 5) vrs_data.fix_state_str = "float";
-    vrs_data.number_of_sat = number_of_sat;
-    vrs_data.horizental_precision = horizental_precision;
-    vrs_data.lat_std = lat_std;
-    vrs_data.lon_std = lon_std;
-    vrs_data.altitude_std = altitude_std;
-    vrs_data.heading_valid = heading_valid;
-    vrs_data.heading_magnet = heading_magnet;
-    vrs_data.speed_knot = speed_knot;
-    vrs_data.speed_km = speed_km;
-    vrs_data.GNVTG_mode = GNVTG_mode;
-    vrs_data_[stamp] = vrs_data;
+               &heading_valid,&heading_magnet,&speed_knot,&speed_km,&GNVTG_mode,&altitude_orthometric);
+    if(length == 18){
+
+        vrs_data.header.stamp.fromNSec(stamp);
+        vrs_data.header.frame_id = "vrs_gps";
+        vrs_data.latitude = latitude;
+        vrs_data.altitude_orthometric = altitude_orthometric;
+        vrs_data.longitude = longitude;
+        vrs_data.x_coordinate = x_coordinate;
+        vrs_data.y_coordinate = y_coordinate;
+        vrs_data.altitude = altitude;
+        vrs_data.fix_state = fix_state;
+        if(fix_state == 1) vrs_data.fix_state_str = "normal";
+        if(fix_state == 4) vrs_data.fix_state_str = "fix";
+        if(fix_state == 5) vrs_data.fix_state_str = "float";
+        vrs_data.number_of_sat = number_of_sat;
+        vrs_data.horizental_precision = horizental_precision;
+        vrs_data.lat_std = lat_std;
+        vrs_data.lon_std = lon_std;
+        vrs_data.altitude_std = altitude_std;
+        vrs_data.heading_valid = heading_valid;
+        vrs_data.heading_magnet = heading_magnet;
+        vrs_data.speed_knot = speed_knot;
+        vrs_data.speed_km = speed_km;
+        vrs_data.GNVTG_mode = GNVTG_mode;
+        vrs_data_[stamp] = vrs_data;
+
+    }else if(length == 17){
+        vrs_data.header.stamp.fromNSec(stamp);
+        vrs_data.header.frame_id = "vrs_gps";
+        vrs_data.latitude = latitude;
+        vrs_data.longitude = longitude;
+        vrs_data.x_coordinate = x_coordinate;
+        vrs_data.y_coordinate = y_coordinate;
+        vrs_data.altitude = altitude;
+        vrs_data.fix_state = fix_state;
+        if(fix_state == 1) vrs_data.fix_state_str = "normal";
+        if(fix_state == 4) vrs_data.fix_state_str = "fix";
+        if(fix_state == 5) vrs_data.fix_state_str = "float";
+        vrs_data.number_of_sat = number_of_sat;
+        vrs_data.horizental_precision = horizental_precision;
+        vrs_data.lat_std = lat_std;
+        vrs_data.lon_std = lon_std;
+        vrs_data.altitude_std = altitude_std;
+        vrs_data.heading_valid = heading_valid;
+        vrs_data.heading_magnet = heading_magnet;
+        vrs_data.speed_knot = speed_knot;
+        vrs_data.speed_km = speed_km;
+        vrs_data.GNVTG_mode = GNVTG_mode;
+        vrs_data_[stamp] = vrs_data;
+
+    }else{
+        break;
+
+    }
   }
   cout << "Vrs gps data are loaded" << endl;
   fclose(fp);
