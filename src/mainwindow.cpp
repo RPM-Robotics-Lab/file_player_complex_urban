@@ -26,9 +26,9 @@ MainWindow::MainWindow(QWidget *parent) :
   connect(ui_->pushButton_3, SIGNAL(pressed()), this, SLOT(Pause()));
 
   connect(ui_->doubleSpinBox, SIGNAL(valueChanged(double)), this, SLOT(PlaySpeedChange(double)));
-  ui_->doubleSpinBox->setRange(0.1,20.0);
+  ui_->doubleSpinBox->setRange(0.01,20.0);
   ui_->doubleSpinBox->setValue(1.0);
-  ui_->doubleSpinBox->setSingleStep(0.1);
+  ui_->doubleSpinBox->setSingleStep(0.01);
   connect(ui_->checkBox, SIGNAL(stateChanged(int)), this, SLOT (LoopFlagChange(int)));
   if(loop_flag_ == true){
     ui_->checkBox->setCheckState(Qt::Checked);
