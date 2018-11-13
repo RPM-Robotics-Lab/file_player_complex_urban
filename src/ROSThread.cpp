@@ -1248,13 +1248,13 @@ void ROSThread::StereoThread()
         cv_bridge::CvImage left_out_msg;
         left_out_msg.header.stamp.fromNSec(data);
         left_out_msg.header.frame_id = "stereo_left";
-        left_out_msg.encoding = sensor_msgs::image_encodings::BAYER_RGGB8;
+        left_out_msg.encoding = sensor_msgs::image_encodings::BAYER_BGGR8;
         left_out_msg.image    = stereo_left_next_img_.second;
 
         cv_bridge::CvImage right_out_msg;
         right_out_msg.header.stamp.fromNSec(data);
         right_out_msg.header.frame_id = "stereo_right";
-        right_out_msg.encoding = sensor_msgs::image_encodings::BAYER_RGGB8;
+        right_out_msg.encoding = sensor_msgs::image_encodings::BAYER_BGGR8;
         right_out_msg.image    = stereo_right_next_img_.second;
 
         stereo_left_info_.header.stamp.fromNSec(data);
@@ -1283,13 +1283,13 @@ void ROSThread::StereoThread()
             cv_bridge::CvImage left_out_msg;
             left_out_msg.header.stamp.fromNSec(data);
             left_out_msg.header.frame_id = "stereo_left";
-            left_out_msg.encoding = sensor_msgs::image_encodings::BAYER_RGGB8;
+            left_out_msg.encoding = sensor_msgs::image_encodings::BAYER_BGGR8;
             left_out_msg.image    = current_left_image;
 
             cv_bridge::CvImage right_out_msg;
             right_out_msg.header.stamp.fromNSec(data);
             right_out_msg.header.frame_id = "stereo_right";
-            right_out_msg.encoding = sensor_msgs::image_encodings::BAYER_RGGB8;
+            right_out_msg.encoding = sensor_msgs::image_encodings::BAYER_BGGR8;
             right_out_msg.image    = current_right_image;
 
             stereo_left_info_.header.stamp.fromNSec(data);
