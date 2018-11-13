@@ -13,14 +13,14 @@
         pkg="stereo_image_proc" type="stereo_image_proc"
         name="stereo_image_proc" ns="$(arg camera)">
 	<param name="stereo_algorithm" value="0"/>
-	<param name="prefilter_size" value="15"/>
-	<param name="prefilter_cap" value="18"/>
-	<param name="correlation_window_size" value="21"/>
-	<param name="min_disparity" value="0"/>
-	<param name="disparity_range" value="128"/>
-	<param name="uniqueness_ratio" value="10.0"/>
-	<param name="texture_threshold" value="10"/>
-	<param name="speckle_size" value="110"/>
-	<param name="speckle_range" value="8"/>
+	<param name="prefilter_size" value="255"/>
+	<param name="prefilter_cap" value="63"/>
+	<param name="correlation_window_size" value="9"/>
+	<param name="min_disparity" value="-74"/>
+	<param name="disparity_range" value="192"/>
+	<param name="uniqueness_ratio" value="1.0"/>
+	<param name="texture_threshold" value="94"/>
+	<param name="speckle_size" value="529"/>
+	<param name="speckle_range" value="31"/>
     </node>
 </launch>
