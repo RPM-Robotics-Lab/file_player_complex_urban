@@ -19,6 +19,11 @@ ROSThread::ROSThread(QObject *parent, QMutex *th_mutex) :
   auto_start_flag_ = true;
   stamp_show_count_ = 0;
   imu_data_version_ = 0;
+  encoder_resolution_ = 0;
+  encoder_left_diameter_ = 0.0;
+  encoder_right_diameter_ = 0.0;
+  encoder_wheel_base_ = 0.0;
+  encoder_param_load_flag_ = false;
 
 }
 
@@ -214,6 +219,38 @@ void ROSThread::Ready()
   fclose(fp);
 
   //Read encoder data
+
+  //Read encoder calibration data
+  std::ifstream file((data_folder_path_+"/calibration/EncoderParameter.txt").c_str());
+   std::string str;
+   while (std::getline(file, str))
+   {
+     cout << str << endl;
+     vector<string> strs;
+     boost::split(strs, str, boost::is_any_of(" "));
+     if(!strs[1].compare("resolution:")){
+//       cout << strs[2] << endl;
+       encoder_resolution_ = std::stoi(strs[2]);
+     }
+     if(!strs[1].compare("left")){
+//       cout << strs[4] << endl;
+       encoder_left_diameter_ = std::stod(strs[4]);
+     }
+     if(!strs[1].compare("right")){
+//       cout << strs[4] << endl;
+       encoder_right_diameter_ = std::stod(strs[4]);
+     }
+     if(!strs[1].compare("wheel")){
+//       cout << strs[3] << endl;
+       encoder_wheel_base_ = std::stod(strs[3]);
+     }
+   }
+   if(encoder_resolution_ != 0){
+      encoder_param_load_flag_ = true;
+   }
+
+  //Read encode data
+
   fp = fopen((data_folder_path_+"/sensor_data/encoder.csv").c_str(),"r");
   int64_t pre_left_count, pre_right_count;
   int64_t left_count, right_count;

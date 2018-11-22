@@ -115,6 +115,11 @@ public:
     string data_folder_path_;
 
     int imu_data_version_;
+    int encoder_resolution_;
+    double encoder_left_diameter_;
+    double encoder_right_diameter_;
+    double encoder_wheel_base_;
+    bool encoder_param_load_flag_;
 
     void Ready();
     void ResetProcessStamp(int position);
