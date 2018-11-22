@@ -49,6 +49,9 @@
 #include <irp_sen_msgs/fog_3axis.h>
 #include <irp_sen_msgs/LaserScanArray.h>
 
+#include <sensor_msgs/Imu.h>
+#include <sensor_msgs/MagneticField.h>
+
 #include <dynamic_reconfigure/server.h>
 #include <file_player/dynamic_file_playerConfig.h>
 #include <Eigen/Dense>
@@ -110,6 +113,9 @@ public:
     bool stop_skip_flag_;
     double play_rate_;
     string data_folder_path_;
+
+    int imu_data_version_;
+
     void Ready();
     void ResetProcessStamp(int position);
 
@@ -133,6 +139,7 @@ private:
     ros::Publisher gps_pub_;
     ros::Publisher vrs_pub_;
     ros::Publisher imu_pub_;
+    ros::Publisher magnet_pub_;
     ros::Publisher velodyne_left_pub_;
     ros::Publisher velodyne_right_pub_;
     ros::Publisher sick_back_pub_;
@@ -160,7 +167,10 @@ private:
     map<int64_t, irp_sen_msgs::fog_3axis>   fog_data_;
     map<int64_t, sensor_msgs::NavSatFix>    gps_data_;
     map<int64_t, irp_sen_msgs::vrs>         vrs_data_;
-    map<int64_t, irp_sen_msgs::imu>         imu_data_;
+
+//    map<int64_t, irp_sen_msgs::imu>         imu_data_;
+    map<int64_t, sensor_msgs::Imu>         imu_data_;
+    map<int64_t, sensor_msgs::MagneticField>         mag_data_;
 
     DataThread<int64_t> data_stamp_thread_;
     DataThread<int64_t> altimter_thread_;
