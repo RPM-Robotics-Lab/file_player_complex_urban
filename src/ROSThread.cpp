@@ -24,6 +24,9 @@ ROSThread::ROSThread(QObject *parent, QMutex *th_mutex) :
   encoder_right_diameter_ = 0.0;
   encoder_wheel_base_ = 0.0;
   encoder_param_load_flag_ = false;
+  encoder_x_ = 0.0;
+  encoder_y_ = 0.0;
+  encoder_theta_ = 0.0;
 
 }
 
@@ -97,6 +100,7 @@ void ROSThread::ros_initialize(ros::NodeHandle &n)
 
   altimeter_pub_ = nh_.advertise<irp_sen_msgs::altimeter>("/altimeter_data", 1000);
   encoder_pub_ = nh_.advertise<irp_sen_msgs::encoder>("/encoder_count", 1000);
+  odometry_pub_ = nh_.advertise<nav_msgs::Odometry>("/odom", 1000);
   fog_pub_ = nh_.advertise<irp_sen_msgs::fog_3axis>("/dsp1760_data", 1000);
   gps_pub_ = nh_.advertise<sensor_msgs::NavSatFix>("/gps/fix", 1000);
   vrs_pub_ = nh_.advertise<irp_sen_msgs::vrs>("/vrs_gps_data", 1000);
@@ -258,7 +262,9 @@ void ROSThread::Ready()
   bool stop_period_start = false;
   irp_sen_msgs::encoder encoder_data;
   encoder_data_.clear();
+  odometry_data_.clear();
   int encoder_stop_count = 0;
+  int64_t current_stamp = 0, prev_stamp = 0;
   while(fscanf(fp,"%ld,%ld,%ld\n",&stamp,&left_count,&right_count) == 3){
     if(left_count == pre_left_count && right_count == pre_right_count && stop_period_start == false){
       encoder_stop_count++;
@@ -285,6 +291,58 @@ void ROSThread::Ready()
     encoder_data_[stamp] = encoder_data;
     pre_left_count = left_count;
     pre_right_count = right_count;
+
+    if(prev_stamp == 0){
+      prev_stamp = stamp - 10000000;
+    }
+    current_stamp = stamp;
+
+    //calculate odometry
+    encoder_param_load_flag_ = false; //Todo
+    if(encoder_param_load_flag_){
+      int64_t d_left_cnt = left_count - pre_left_count;
+      int64_t d_right_cnt = right_count - pre_right_count;
+
+      double left_distnace = ((double)d_left_cnt/(double)encoder_resolution_)*encoder_left_diameter_*M_PI;
+      double right_distance = ((double)d_right_cnt/(double)encoder_resolution_)*encoder_right_diameter_*M_PI;
+      double stamp_diff = static_cast<double>(current_stamp - prev_stamp);
+      double dx = (left_distnace + right_distance)*0.5;
+      double dtheta = (left_distnace - right_distance)/wheel_base_;
+      double vx = dx/stamp_diff;
+      double vy = 0.0;
+      double vth = dtheta/stamp_diff;
+
+      double delta_x = (dx * cos(dtheta));
+      double delta_y = (dx * sin(dtheta));
+      double delta_th = dtheta;
+
+      encoder_x += delta_x;
+      encoder_y += delta_y;
+      encoder_theta_ += delta_th;
+      geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(encoder_theta_);
+
+      //Odometry message
+      nav_msgs::Odometry odom;
+      odom.header.stamp = current_stamp;
+      odom.header.frame_id = "odom";
+
+      //set the position
+      odom.pose.pose.position.x = encoder_x_;
+      odom.pose.pose.position.y = encoder_y_;;
+      odom.pose.pose.position.z = 0.0;
+      odom.pose.pose.orientation = odom_quat;
+
+      //set the velocity
+      odom.child_frame_id = "base_link";
+      odom.twist.twist.linear.x = left_velocity;
+      odom.twist.twist.linear.y = right_velocity;
+      odom.twist.twist.angular.z = vth;
+
+
+
+
+      prev_stamp = current_stamp;
+    }
   }
 
 //  cout << stop_period_.size() << endl;
@@ -847,6 +905,9 @@ void ROSThread::EncoderThread()
       //process
       if(encoder_data_.find(data) != encoder_data_.end()){
         encoder_pub_.publish(encoder_data_[data]);
+        if(encoder_param_load_flag_){
+          odometry_pub_.publish(odometry_data_[data]);
+        }
       }
 
     }

@@ -51,6 +51,7 @@
 
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/MagneticField.h>
+#include <nav_msgs/Odometry.h>
 
 #include <dynamic_reconfigure/server.h>
 #include <file_player/dynamic_file_playerConfig.h>
@@ -120,6 +121,9 @@ public:
     double encoder_right_diameter_;
     double encoder_wheel_base_;
     bool encoder_param_load_flag_;
+    double encoder_x_;
+    double encoder_y_;
+    double encoder_theta_;
 
     void Ready();
     void ResetProcessStamp(int position);
@@ -140,6 +144,7 @@ private:
 
     ros::Publisher altimeter_pub_;
     ros::Publisher encoder_pub_;
+    ros::Publisher odometry_pub_;
     ros::Publisher fog_pub_;
     ros::Publisher gps_pub_;
     ros::Publisher vrs_pub_;
@@ -169,6 +174,7 @@ private:
     multimap<int64_t, string>                    data_stamp_;
     map<int64_t, irp_sen_msgs::altimeter>   altimeter_data_;
     map<int64_t, irp_sen_msgs::encoder>     encoder_data_;
+    map<int64_t, nav_msgs::Odometry>     odometry_data_;
     map<int64_t, irp_sen_msgs::fog_3axis>   fog_data_;
     map<int64_t, sensor_msgs::NavSatFix>    gps_data_;
     map<int64_t, irp_sen_msgs::vrs>         vrs_data_;
