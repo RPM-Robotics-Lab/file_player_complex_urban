@@ -23,6 +23,7 @@ find_package(catkin REQUIRED cmake_modules
   pcl_msgs
   irp_sen_msgs
   camera_info_manager
+  tf
 )
 set(CMAKE_AUTOMOC ON)
 
@@ -68,6 +69,7 @@ catkin_package(
     pcl_msgs
     irp_sen_msgs
     camera_info_manager
+    tf
 
   DEPENDS 
     Eigen

@@ -256,7 +256,7 @@ void ROSThread::Ready()
   //Read encode data
 
   fp = fopen((data_folder_path_+"/sensor_data/encoder.csv").c_str(),"r");
-  int64_t pre_left_count, pre_right_count;
+  int64_t pre_left_count = 0, pre_right_count = 0;
   int64_t left_count, right_count;
   int64_t stop_start_stamp, stop_end_stamp;
   bool stop_period_start = false;
@@ -289,16 +289,18 @@ void ROSThread::Ready()
     encoder_data.left_count = left_count;
     encoder_data.right_count = right_count;
     encoder_data_[stamp] = encoder_data;
-    pre_left_count = left_count;
-    pre_right_count = right_count;
 
     if(prev_stamp == 0){
       prev_stamp = stamp - 10000000;
     }
+    if(pre_left_count == 0 && pre_right_count == 0){
+      pre_left_count = left_count;
+      pre_right_count = right_count;
+    }
     current_stamp = stamp;
 
     //calculate odometry
-    encoder_param_load_flag_ = false; //Todo
+
     if(encoder_param_load_flag_){
       int64_t d_left_cnt = left_count - pre_left_count;
       int64_t d_right_cnt = right_count - pre_right_count;
@@ -307,23 +309,23 @@ void ROSThread::Ready()
       double right_distance = ((double)d_right_cnt/(double)encoder_resolution_)*encoder_right_diameter_*M_PI;
       double stamp_diff = static_cast<double>(current_stamp - prev_stamp);
       double dx = (left_distnace + right_distance)*0.5;
-      double dtheta = (left_distnace - right_distance)/wheel_base_;
+      double dy = 0.0;
+      double dtheta = (right_distance - left_distnace)/encoder_wheel_base_;
       double vx = dx/stamp_diff;
-      double vy = 0.0;
+      double vy = dy/stamp_diff;
       double vth = dtheta/stamp_diff;
 
-      double delta_x = (dx * cos(dtheta));
-      double delta_y = (dx * sin(dtheta));
+      double delta_x = (dx * cos(encoder_theta_));
+      double delta_y = (dx * sin(encoder_theta_));
       double delta_th = dtheta;
 
-      encoder_x += delta_x;
-      encoder_y += delta_y;
+      encoder_x_ += delta_x;
+      encoder_y_ += delta_y;
       encoder_theta_ += delta_th;
       geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(encoder_theta_);
-
       //Odometry message
       nav_msgs::Odometry odom;
-      odom.header.stamp = current_stamp;
+      odom.header.stamp.fromNSec(current_stamp);
       odom.header.frame_id = "odom";
 
       //set the position
@@ -334,15 +336,16 @@ void ROSThread::Ready()
 
       //set the velocity
       odom.child_frame_id = "base_link";
-      odom.twist.twist.linear.x = left_velocity;
-      odom.twist.twist.linear.y = right_velocity;
+      odom.twist.twist.linear.x = vx;
+      odom.twist.twist.linear.y = vy;
       odom.twist.twist.angular.z = vth;
+      odometry_data_[stamp] = odom;
 
-
-
-
-      prev_stamp = current_stamp;
     }
+    prev_stamp = current_stamp;
+    pre_left_count = left_count;
+    pre_right_count = right_count;
+
   }
 
 //  cout << stop_period_.size() << endl;
