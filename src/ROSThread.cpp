@@ -104,6 +104,7 @@ void ROSThread::ros_initialize(ros::NodeHandle &n)
   fog_pub_ = nh_.advertise<irp_sen_msgs::fog_3axis>("/dsp1760_data", 1000);
   gps_pub_ = nh_.advertise<sensor_msgs::NavSatFix>("/gps/fix", 1000);
   vrs_pub_ = nh_.advertise<irp_sen_msgs::vrs>("/vrs_gps_data", 1000);
+  gps_odometry_pub_ = nh_.advertise<nav_msgs::Odometry>("/gps/odom", 1000);
 //  imu_pub_ = nh_.advertise<irp_sen_msgs::imu>("/xsens_imu_data", 1000);
   imu_pub_ = nh_.advertise<sensor_msgs::Imu>("/imu/data_raw", 1000);
   magnet_pub_ = nh_.advertise<sensor_msgs::MagneticField>("/imu/mag", 1000);
@@ -334,11 +335,32 @@ void ROSThread::Ready()
       odom.pose.pose.position.z = 0.0;
       odom.pose.pose.orientation = odom_quat;
 
+      //pose covariance (6x6)
+      odom.pose.covariance[0] = 1;
+      odom.pose.covariance[7] = 1;
+      odom.pose.covariance[14] = 1;
+      odom.pose.covariance[21] = 1;
+      odom.pose.covariance[28] = 1;
+      odom.pose.covariance[35] = 1;
+      //twist covariance(6x6)
+      odom.twist.covariance[0] = 1;
+      odom.twist.covariance[7] = 1;
+      odom.twist.covariance[14] = 1;
+      odom.twist.covariance[21] = 1;
+      odom.twist.covariance[28] = 1;
+      odom.twist.covariance[35] = 1;
+
       //set the velocity
       odom.child_frame_id = "base_link";
       odom.twist.twist.linear.x = vx;
       odom.twist.twist.linear.y = vy;
       odom.twist.twist.angular.z = vth;
+
+      //set covariance of odometry
+
+
+
+
       odometry_data_[stamp] = odom;
 
     }
@@ -382,6 +404,9 @@ void ROSThread::Ready()
     gps_data.altitude = altitude;
     for(int i = 0 ; i < 9 ; i ++) gps_data.position_covariance[i] = cov[i];
     gps_data_[stamp] = gps_data;
+
+
+
   }
   cout << "Gps data are loaded" << endl;
   fclose(fp);
@@ -393,6 +418,7 @@ void ROSThread::Ready()
   char GNVTG_mode;
   irp_sen_msgs::vrs vrs_data;
   vrs_data_.clear();
+//  gps_odometry_data_.clear();
   while(1){
     int length = fscanf(fp,"%ld,%lf,%lf,%lf,%lf,%lf,%d,%d,%lf,%lf,%lf,%lf,%d,%lf,%lf,%lf,%c,%lf\n",&stamp,&latitude,&longitude,&x_coordinate,
                &y_coordinate,&altitude,&fix_state,&number_of_sat,&horizental_precision,&lat_std,&lon_std,&altitude_std,
@@ -423,6 +449,42 @@ void ROSThread::Ready()
         vrs_data.GNVTG_mode = GNVTG_mode;
         vrs_data_[stamp] = vrs_data;
 
+//        nav_msgs::Odometry gps_odom;
+//        gps_odom.header.stamp.fromNSec(stamp);
+//        gps_odom.header.frame_id = "gps_odom";
+
+//        //set the position
+//        gps_odom.pose.pose.position.x = x_coordinate;
+//        gps_odom.pose.pose.position.y = y_coordinate;;
+//        gps_odom.pose.pose.position.z = altitude_orthometric;
+//        geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(0);
+//        gps_odom.pose.pose.orientation = odom_quat;
+
+//        //pose covariance (6x6)
+//        gps_odom.pose.covariance[0] = 0.1;
+//        gps_odom.pose.covariance[7] = 0.1;
+//        gps_odom.pose.covariance[14] = 0.1;
+//        gps_odom.pose.covariance[21] = 999;
+//        gps_odom.pose.covariance[28] = 999;
+//        gps_odom.pose.covariance[35] = 999;
+//        //twist covariance(6x6)
+//        gps_odom.twist.covariance[0] = 999;
+//        gps_odom.twist.covariance[7] = 999;
+//        gps_odom.twist.covariance[14] = 999;
+//        gps_odom.twist.covariance[21] = 999;
+//        gps_odom.twist.covariance[28] = 999;
+//        gps_odom.twist.covariance[35] = 999;
+
+//        //set the velocity
+//        gps_odom.child_frame_id = "base_link";
+//        gps_odom.twist.twist.linear.x = 0;
+//        gps_odom.twist.twist.linear.y = 0;
+//        gps_odom.twist.twist.angular.z = 0;
+
+//        //set covariance of odometry
+//        gps_odometry_data_[stamp] = gps_odom;
+
+
     }else if(length == 17){
         vrs_data.header.stamp.fromNSec(stamp);
         vrs_data.header.frame_id = "vrs_gps";
@@ -446,6 +508,9 @@ void ROSThread::Ready()
         vrs_data.speed_km = speed_km;
         vrs_data.GNVTG_mode = GNVTG_mode;
         vrs_data_[stamp] = vrs_data;
+
+
+
 
     }else{
         break;
@@ -471,7 +536,7 @@ void ROSThread::Ready()
     if(length != 8 && length != 17) break;
     if(length == 8){
       imu_data.header.stamp.fromNSec(stamp);
-      imu_data.header.frame_id = "/imu";
+      imu_data.header.frame_id = "imu";
 //      imu_data.quaternion_data.x = q_x;
 //      imu_data.quaternion_data.y = q_y;
 //      imu_data.quaternion_data.z = q_z;
@@ -483,12 +548,13 @@ void ROSThread::Ready()
       imu_data.orientation.y = q_y;
       imu_data.orientation.z = q_z;
       imu_data.orientation.w = q_w;
+
       imu_data_[stamp] = imu_data;
       imu_data_version_ = 1;
 
     }else if(length == 17){
       imu_data.header.stamp.fromNSec(stamp);
-      imu_data.header.frame_id = "/imu";
+      imu_data.header.frame_id = "imu";
 //      imu_data.quaternion_data.x = q_x;
 //      imu_data.quaternion_data.y = q_y;
 //      imu_data.quaternion_data.z = q_z;
@@ -516,6 +582,17 @@ void ROSThread::Ready()
       imu_data.linear_acceleration.x = a_x;
       imu_data.linear_acceleration.y = a_y;
       imu_data.linear_acceleration.z = a_z;
+
+      imu_data.orientation_covariance[0] = 3;
+      imu_data.orientation_covariance[4] = 3;
+      imu_data.orientation_covariance[8] = 3;
+      imu_data.angular_velocity_covariance[0] = 3;
+      imu_data.angular_velocity_covariance[4] = 3;
+      imu_data.angular_velocity_covariance[8] = 3;
+      imu_data.linear_acceleration_covariance[0] = 3;
+      imu_data.linear_acceleration_covariance[4] = 3;
+      imu_data.linear_acceleration_covariance[8] = 3;
+
 
       imu_data_[stamp] = imu_data;
 
@@ -971,6 +1048,7 @@ void ROSThread::VrsThread()
       //process
       if(vrs_data_.find(data) != vrs_data_.end()){
         vrs_pub_.publish(vrs_data_[data]);
+//        gps_odometry_pub_.publish(gps_odometry_data_[data]);
       }
 
     }

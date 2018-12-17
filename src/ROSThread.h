@@ -151,6 +151,7 @@ private:
     ros::Publisher fog_pub_;
     ros::Publisher gps_pub_;
     ros::Publisher vrs_pub_;
+    ros::Publisher gps_odometry_pub_;
     ros::Publisher imu_pub_;
     ros::Publisher magnet_pub_;
     ros::Publisher velodyne_left_pub_;
@@ -160,19 +161,9 @@ private:
 
     ros::Publisher stereo_left_pub_;
     ros::Publisher stereo_right_pub_;
-//    ros::Publisher omni0_pub_;
-//    ros::Publisher omni1_pub_;
-//    ros::Publisher omni2_pub_;
-//    ros::Publisher omni3_pub_;
-//    ros::Publisher omni4_pub_;
 
     ros::Publisher stereo_left_info_pub_;
     ros::Publisher stereo_right_info_pub_;
-//    ros::Publisher omni0_info_pub_;
-//    ros::Publisher omni1_info_pub_;
-//    ros::Publisher omni2_info_pub_;
-//    ros::Publisher omni3_info_pub_;
-//    ros::Publisher omni4_info_pub_;
 
     multimap<int64_t, string>                    data_stamp_;
     map<int64_t, irp_sen_msgs::altimeter>   altimeter_data_;
@@ -181,6 +172,7 @@ private:
     map<int64_t, irp_sen_msgs::fog_3axis>   fog_data_;
     map<int64_t, sensor_msgs::NavSatFix>    gps_data_;
     map<int64_t, irp_sen_msgs::vrs>         vrs_data_;
+    map<int64_t, nav_msgs::Odometry>     gps_odometry_data_;
 
 //    map<int64_t, irp_sen_msgs::imu>         imu_data_;
     map<int64_t, sensor_msgs::Imu>         imu_data_;
