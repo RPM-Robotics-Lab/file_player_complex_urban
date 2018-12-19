@@ -1457,7 +1457,7 @@ void ROSThread::StereoThread()
       if(stereo_file_list_.size() == 0) continue;
 
       //publish
-      if(to_string(data)+".png" == stereo_left_next_img_.first){
+      if(to_string(data)+".png" == stereo_left_next_img_.first && !stereo_left_next_img_.second.empty() && !stereo_right_next_img_.second.empty()){
         cv_bridge::CvImage left_out_msg;
         left_out_msg.header.stamp.fromNSec(data);
         left_out_msg.header.frame_id = "stereo_left";
