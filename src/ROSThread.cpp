@@ -105,7 +105,7 @@ void ROSThread::ros_initialize(ros::NodeHandle &n)
   gps_pub_ = nh_.advertise<sensor_msgs::NavSatFix>("/gps/fix", 1000);
   vrs_pub_ = nh_.advertise<irp_sen_msgs::vrs>("/vrs_gps_data", 1000);
   gps_odometry_pub_ = nh_.advertise<nav_msgs::Odometry>("/gps/odom", 1000);
-//  imu_pub_ = nh_.advertise<irp_sen_msgs::imu>("/xsens_imu_data", 1000);
+  imu_origin_pub_ = nh_.advertise<irp_sen_msgs::imu>("/xsens_imu_data", 1000);
   imu_pub_ = nh_.advertise<sensor_msgs::Imu>("/imu/data_raw", 1000);
   magnet_pub_ = nh_.advertise<sensor_msgs::MagneticField>("/imu/mag", 1000);
   velodyne_left_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("/ns2/velodyne_points", 1000);
@@ -524,7 +524,7 @@ void ROSThread::Ready()
   //Read IMU data
   fp = fopen((data_folder_path_+"/sensor_data/xsens_imu.csv").c_str(),"r");
   double q_x,q_y,q_z,q_w,x,y,z,g_x,g_y,g_z,a_x,a_y,a_z,m_x,m_y,m_z;
-//  irp_sen_msgs::imu imu_data;
+  irp_sen_msgs::imu imu_data_origin;
   sensor_msgs::Imu imu_data;
   sensor_msgs::MagneticField mag_data;
   imu_data_.clear();
@@ -537,13 +537,6 @@ void ROSThread::Ready()
     if(length == 8){
       imu_data.header.stamp.fromNSec(stamp);
       imu_data.header.frame_id = "imu";
-//      imu_data.quaternion_data.x = q_x;
-//      imu_data.quaternion_data.y = q_y;
-//      imu_data.quaternion_data.z = q_z;
-//      imu_data.quaternion_data.w = q_w;
-//      imu_data.eular_data.x = x;
-//      imu_data.eular_data.y = y;
-//      imu_data.eular_data.z = z;
       imu_data.orientation.x = q_x;
       imu_data.orientation.y = q_y;
       imu_data.orientation.z = q_z;
@@ -552,26 +545,22 @@ void ROSThread::Ready()
       imu_data_[stamp] = imu_data;
       imu_data_version_ = 1;
 
+
+      imu_data_origin.header.stamp.fromNSec(stamp);
+      imu_data_origin.header.frame_id = "imu";
+      imu_data_origin.quaternion_data.x = q_x;
+      imu_data_origin.quaternion_data.y = q_y;
+      imu_data_origin.quaternion_data.z = q_z;
+      imu_data_origin.quaternion_data.w = q_w;
+      imu_data_origin.eular_data.x = x;
+      imu_data_origin.eular_data.y = y;
+      imu_data_origin.eular_data.z = z;
+      imu_data_origin_[stamp] = imu_data_origin;
+
+
     }else if(length == 17){
       imu_data.header.stamp.fromNSec(stamp);
       imu_data.header.frame_id = "imu";
-//      imu_data.quaternion_data.x = q_x;
-//      imu_data.quaternion_data.y = q_y;
-//      imu_data.quaternion_data.z = q_z;
-//      imu_data.quaternion_data.w = q_w;
-//      imu_data.eular_data.x = x;
-//      imu_data.eular_data.y = y;
-//      imu_data.eular_data.z = z;
-//      imu_data.gyro_data.x = g_x;
-//      imu_data.gyro_data.y = g_y;
-//      imu_data.gyro_data.z = g_z;
-//      imu_data.acceleration_data.x = a_x;
-//      imu_data.acceleration_data.y = a_y;
-//      imu_data.acceleration_data.z = a_z;
-//      imu_data.magneticfield_data.x = m_x;
-//      imu_data.magneticfield_data.y = m_y;
-//      imu_data.magneticfield_data.z = m_z;
-
       imu_data.orientation.x = q_x;
       imu_data.orientation.y = q_y;
       imu_data.orientation.z = q_z;
@@ -601,6 +590,28 @@ void ROSThread::Ready()
       mag_data.magnetic_field.z = m_z;
       mag_data_[stamp] = mag_data;
       imu_data_version_ = 2;
+
+
+      imu_data_origin.header.stamp.fromNSec(stamp);
+      imu_data_origin.header.frame_id = "imu";
+      imu_data_origin.quaternion_data.x = q_x;
+      imu_data_origin.quaternion_data.y = q_y;
+      imu_data_origin.quaternion_data.z = q_z;
+      imu_data_origin.quaternion_data.w = q_w;
+      imu_data_origin.eular_data.x = x;
+      imu_data_origin.eular_data.y = y;
+      imu_data_origin.eular_data.z = z;
+      imu_data_origin.gyro_data.x = g_x;
+      imu_data_origin.gyro_data.y = g_y;
+      imu_data_origin.gyro_data.z = g_z;
+      imu_data_origin.acceleration_data.x = a_x;
+      imu_data_origin.acceleration_data.y = a_y;
+      imu_data_origin.acceleration_data.z = a_z;
+      imu_data_origin.magneticfield_data.x = m_x;
+      imu_data_origin.magneticfield_data.y = m_y;
+      imu_data_origin.magneticfield_data.z = m_z;
+      imu_data_origin_[stamp] = imu_data_origin;
+
     }
   }
   cout << "IMU data are loaded" << endl;
@@ -1069,6 +1080,7 @@ void ROSThread::ImuThread()
       //process
       if(imu_data_.find(data) != imu_data_.end()){
         imu_pub_.publish(imu_data_[data]);
+        imu_origin_pub_.publish(imu_data_origin_[data]);
         if(imu_data_version_ == 2){
           magnet_pub_.publish(mag_data_[data]);
         }
