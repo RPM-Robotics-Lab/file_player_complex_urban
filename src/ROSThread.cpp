@@ -584,7 +584,8 @@ void ROSThread::Ready()
 
 
       imu_data_[stamp] = imu_data;
-
+      mag_data.header.stamp.fromNSec(stamp);
+      mag_data.header.frame_id = "imu";
       mag_data.magnetic_field.x = m_x;
       mag_data.magnetic_field.y = m_y;
       mag_data.magnetic_field.z = m_z;
