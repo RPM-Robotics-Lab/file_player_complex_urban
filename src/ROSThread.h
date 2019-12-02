@@ -28,7 +28,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/LaserScan.h>
-
+#include <rosgraph_msgs/Clock.h>
 
 #include <camera_info_manager/camera_info_manager.h>
 #include <std_msgs/String.h>
@@ -164,6 +164,8 @@ private:
 
     ros::Publisher stereo_left_info_pub_;
     ros::Publisher stereo_right_info_pub_;
+
+    ros::Publisher clock_pub_;
 
     multimap<int64_t, string>                    data_stamp_;
     map<int64_t, irp_sen_msgs::altimeter>   altimeter_data_;

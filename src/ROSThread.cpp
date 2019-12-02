@@ -129,6 +129,8 @@ void ROSThread::ros_initialize(ros::NodeHandle &n)
 //  omni3_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image3/camera_info", 10);
 //  omni4_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/occam_node/image4/camera_info", 10);
 
+  clock_pub_ = nh_.advertise<rosgraph_msgs::Clock>("/clock", 1);
+
 }
 
 void ROSThread::run()
@@ -931,6 +933,10 @@ void ROSThread::DataStampThread()
       stamp_show_count_ = 0;
       emit StampShow(stamp);
     }
+    rosgraph_msgs::Clock clock;
+    clock.clock.fromNSec(stamp);
+    clock_pub_.publish(clock);
+    ros::WallDuration(0.001 / play_rate_).sleep();
 
     if(loop_flag_ == true && iter == prev(data_stamp_.end(),1)){
         iter = data_stamp_.begin();
