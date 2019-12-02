@@ -152,6 +152,7 @@ private:
     ros::Publisher gps_pub_;
     ros::Publisher vrs_pub_;
     ros::Publisher gps_odometry_pub_;
+    ros::Publisher imu_origin_pub_;
     ros::Publisher imu_pub_;
     ros::Publisher magnet_pub_;
     ros::Publisher velodyne_left_pub_;
@@ -176,7 +177,7 @@ private:
     map<int64_t, irp_sen_msgs::vrs>         vrs_data_;
     map<int64_t, nav_msgs::Odometry>     gps_odometry_data_;
 
-//    map<int64_t, irp_sen_msgs::imu>         imu_data_;
+    map<int64_t, irp_sen_msgs::imu>         imu_data_origin_;
     map<int64_t, sensor_msgs::Imu>         imu_data_;
     map<int64_t, sensor_msgs::MagneticField>         mag_data_;
 
