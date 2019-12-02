@@ -948,7 +948,7 @@ void ROSThread::DataStampThread()
     rosgraph_msgs::Clock clock;
     clock.clock.fromNSec(stamp);
     clock_pub_.publish(clock);
-    ros::WallDuration(0.001 / play_rate_).sleep();
+    //ros::WallDuration(0.001 / play_rate_).sleep();
 
     if(loop_flag_ == true && iter == prev(data_stamp_.end(),1)){
         iter = data_stamp_.begin();
