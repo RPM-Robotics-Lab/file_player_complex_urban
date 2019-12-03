@@ -27,6 +27,7 @@ ROSThread::ROSThread(QObject *parent, QMutex *th_mutex) :
   encoder_x_ = 0.0;
   encoder_y_ = 0.0;
   encoder_theta_ = 0.0;
+  prev_clock_stamp_ = 0;
 
 }
 
@@ -945,10 +946,13 @@ void ROSThread::DataStampThread()
       stamp_show_count_ = 0;
       emit StampShow(stamp);
     }
-    rosgraph_msgs::Clock clock;
-    clock.clock.fromNSec(stamp);
-    clock_pub_.publish(clock);
-    //ros::WallDuration(0.001 / play_rate_).sleep();
+
+    if(prev_clock_stamp_ == 0 || (stamp - prev_clock_stamp_) > 10000000){
+        rosgraph_msgs::Clock clock;
+        clock.clock.fromNSec(stamp);
+        clock_pub_.publish(clock);
+        prev_clock_stamp_ = stamp;
+    }
 
     if(loop_flag_ == true && iter == prev(data_stamp_.end(),1)){
         iter = data_stamp_.begin();
@@ -1108,6 +1112,7 @@ void ROSThread::TimerCallback(const ros::TimerEvent&)
 
     if(play_flag_ == false){
       processed_stamp_ = 0; //reset
+      prev_clock_stamp_ = 0;
     }
 }
 void ROSThread::VelodyneLeftThread()

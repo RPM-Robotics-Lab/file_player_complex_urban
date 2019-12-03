@@ -168,6 +168,8 @@ private:
 
     ros::Publisher clock_pub_;
 
+    int64_t prev_clock_stamp_;
+
     multimap<int64_t, string>                    data_stamp_;
     map<int64_t, irp_sen_msgs::altimeter>   altimeter_data_;
     map<int64_t, irp_sen_msgs::encoder>     encoder_data_;
