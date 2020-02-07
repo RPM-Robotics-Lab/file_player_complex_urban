@@ -330,7 +330,7 @@ void ROSThread::Ready()
       //Odometry message
       nav_msgs::Odometry odom;
       odom.header.stamp.fromNSec(current_stamp);
-      odom.header.frame_id = "odom";
+      odom.header.frame_id = "map";
 
       //set the position
       odom.pose.pose.position.x = encoder_x_;
