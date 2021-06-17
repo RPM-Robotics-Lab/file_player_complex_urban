@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(file_player)
 
-add_definitions(-std=c++11)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (NOT CMAKE_BUILD_TYPE)
   set (CMAKE_BUILD_TYPE release)
@@ -117,7 +118,6 @@ add_dependencies(file_player file_player_msgs_generate_messages_cpp ${PROJECT_NA
 add_dependencies(file_player ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(file_player
-
   ${catkin_LIBRARIES}
   ${QT_LIBRARIES} 
   ${OPENGL_LIBRARIES}

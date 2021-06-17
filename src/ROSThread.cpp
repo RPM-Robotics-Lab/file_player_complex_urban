@@ -1512,8 +1512,8 @@ void ROSThread::StereoThread()
         string current_stereo_right_name = data_folder_path_ + "/image/stereo_right" +"/"+ to_string(data)+".png";
         cv::Mat current_left_image;
         cv::Mat current_right_image;
-        current_left_image = imread(current_stereo_left_name, CV_LOAD_IMAGE_ANYDEPTH);
-        current_right_image = imread(current_stereo_right_name, CV_LOAD_IMAGE_ANYDEPTH);
+        current_left_image = imread(current_stereo_left_name, cv::IMREAD_ANYDEPTH);
+        current_right_image = imread(current_stereo_right_name, cv::IMREAD_ANYDEPTH);
 
         if(!current_left_image.empty() && !current_right_image.empty()){
 
@@ -1553,8 +1553,8 @@ void ROSThread::StereoThread()
           string next_stereo_right_name = data_folder_path_ + "/image/stereo_right" +"/"+ stereo_file_list_[current_img_index+1];
           cv::Mat next_left_image;
           cv::Mat next_right_image;
-          next_left_image = imread(next_stereo_left_name, CV_LOAD_IMAGE_ANYDEPTH);
-          next_right_image = imread(next_stereo_right_name, CV_LOAD_IMAGE_ANYDEPTH);
+          next_left_image = imread(next_stereo_left_name, cv::IMREAD_ANYDEPTH);
+          next_right_image = imread(next_stereo_right_name, cv::IMREAD_ANYDEPTH);
           if(!next_left_image.empty() && !next_right_image.empty()){
               stereo_left_next_img_ = make_pair(stereo_file_list_[current_img_index+1], next_left_image);
               stereo_right_next_img_ = make_pair(stereo_file_list_[current_img_index+1], next_right_image);
@@ -1647,11 +1647,11 @@ void ROSThread::OmniThread()
         cv::Mat omni2_image;
         cv::Mat omni3_image;
         cv::Mat omni4_image;
-        omni0_image = imread(current_omni0_name, CV_LOAD_IMAGE_COLOR);
-        omni1_image = imread(current_omni1_name, CV_LOAD_IMAGE_COLOR);
-        omni2_image = imread(current_omni2_name, CV_LOAD_IMAGE_COLOR);
-        omni3_image = imread(current_omni3_name, CV_LOAD_IMAGE_COLOR);
-        omni4_image = imread(current_omni4_name, CV_LOAD_IMAGE_COLOR);
+        omni0_image = imread(current_omni0_name, cv::IMREAD_COLOR);
+        omni1_image = imread(current_omni1_name, cv::IMREAD_COLOR);
+        omni2_image = imread(current_omni2_name, cv::IMREAD_COLOR);
+        omni3_image = imread(current_omni3_name, cv::IMREAD_COLOR);
+        omni4_image = imread(current_omni4_name, cv::IMREAD_COLOR);
         if(!omni0_image.empty() && !omni1_image.empty() && !omni2_image.empty() && !omni3_image.empty() && !omni4_image.empty()){
 
             cv::cvtColor(omni0_image, omni0_image, cv::COLOR_RGB2BGR);
@@ -1730,11 +1730,11 @@ void ROSThread::OmniThread()
           cv::Mat omni2_image;
           cv::Mat omni3_image;
           cv::Mat omni4_image;
-          omni0_image = imread(next_omni0_name, CV_LOAD_IMAGE_COLOR);
-          omni1_image = imread(next_omni1_name, CV_LOAD_IMAGE_COLOR);
-          omni2_image = imread(next_omni2_name, CV_LOAD_IMAGE_COLOR);
-          omni3_image = imread(next_omni3_name, CV_LOAD_IMAGE_COLOR);
-          omni4_image = imread(next_omni4_name, CV_LOAD_IMAGE_COLOR);
+          omni0_image = imread(next_omni0_name, cv::IMREAD_COLOR);
+          omni1_image = imread(next_omni1_name, cv::IMREAD_COLOR);
+          omni2_image = imread(next_omni2_name, cv::IMREAD_COLOR);
+          omni3_image = imread(next_omni3_name, cv::IMREAD_COLOR);
+          omni4_image = imread(next_omni4_name, cv::IMREAD_COLOR);
           if(!omni0_image.empty() && !omni1_image.empty() && !omni2_image.empty() && !omni3_image.empty() && !omni4_image.empty()){
               cv::cvtColor(omni0_image, omni0_image, cv::COLOR_RGB2BGR);
               cv::cvtColor(omni1_image, omni1_image, cv::COLOR_RGB2BGR);
