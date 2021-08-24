@@ -1,10 +1,16 @@
 # File player for complex urban data set
 
-Maintainer: Jinyong Jeong (jjy0923@kaist.ac.kr)
+## News
+- Aug 2021: Our dataset is now available via [this google-site (https://bit.ly/complex-urban-dataset)](https://sites.google.com/view/complex-urban-dataset).
 
+## What is File player?
 This program is a file player for the complex urban data set. If a user installs the ROS using "Desktop-Full version", there is only one additional dependent package, except for the ROS default package. First, clone this package into the src folder of your desired ROS workspace.
 
-## 1. Obtain dependent package (defined msg)
+Maintainer: Jinyong Jeong (jjy0923@kaist.ac.kr)
+
+## How to use?
+
+### 1. Obtain dependent package (defined msg)
 
 ```
 $cd ~/catkin_ws/src
@@ -13,21 +19,21 @@ $wstool merge file_player/depend_pack.rosinstall
 $wstool update
 ```
 
-## 2. Build workspace
+### 2. Build workspace
 
 ```
 $cd ~/catkin_ws
 $catkin_make
 ```
 
-## 3. Run file player
+### 3. Run file player
 
 ```
 $source devel/setup.bash
 $roslaunch file_player file_player.launch
 ```
 
-## 4. Load data files and play
+### 4. Load data files and play
 
 1. Click 'Load' button.
 2. Choose data set folder including sensor_data folder and calibration folder.
